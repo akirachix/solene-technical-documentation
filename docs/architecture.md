@@ -5,6 +5,9 @@ Canopy is designed to support mountain gorilla health monitoring by connecting f
 
 The central architectural principle is continuity of a health case. A field observation should remain connected to the veterinary review it triggers, the decision made, the follow-up assigned, and the eventual outcome. Information should not become disconnected across separate records or communication channels. The platform is intended to complement existing conservation and veterinary systems rather than replace them.
 
+[Canopy SAD](https://lucid.app/lucidchart/3bed14f6-0cf8-492f-b173-2438326808ae/edit?invitationId=inv_9f61c8ef-ee56-41a7-be90-a3115e7ba658&page=0_0#)
+
+
 ## Components & Responsibilities
 
 
