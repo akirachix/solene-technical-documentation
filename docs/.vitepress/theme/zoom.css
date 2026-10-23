@@ -1,0 +1,232 @@
+.vp-doc div[class*='language-'] .code-zoom-open {
+  position: absolute;
+  top: 12px;
+  right: 60px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--vp-c-border);
+  border-radius: 4px;
+  background-color: var(--vp-code-block-bg);
+  color: var(--vp-c-text-2);
+  opacity: 0;
+  cursor: zoom-in;
+  transition: opacity 0.25s, color 0.25s, border-color 0.25s;
+}
+
+.vp-doc div[class*='language-']:hover .code-zoom-open,
+.vp-doc div[class*='language-'] .code-zoom-open:focus-visible {
+  opacity: 1;
+}
+
+.vp-doc div[class*='language-'] .code-zoom-open:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
+}
+
+.vp-doc div.code-collapsible {
+  padding-bottom: 52px;
+}
+
+.vp-doc div.code-collapsible.is-collapsed pre {
+  max-height: calc(var(--vp-code-line-height) * var(--vp-code-font-size) * 12 + 20px);
+  overflow: hidden;
+}
+
+.vp-doc div.code-collapsible.is-collapsed::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 52px;
+  height: 72px;
+  background: linear-gradient(to bottom, transparent, var(--vp-code-block-bg));
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vp-doc div.code-collapsible .code-toggle {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 6px 18px;
+  border: 1px solid var(--vp-c-border);
+  border-radius: 9999px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-brand-1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.vp-doc div.code-collapsible .code-toggle:hover {
+  border-color: var(--vp-c-brand-1);
+  background: var(--vp-c-bg-soft);
+}
+
+.vp-doc img.zoomable {
+  cursor: zoom-in;
+}
+
+.zoom-modal {
+  --zoom: 1;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: rgba(24, 20, 16, 0.92);
+  backdrop-filter: blur(4px);
+  animation: zoom-fade 0.18s ease-out;
+}
+
+@keyframes zoom-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.zoom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zoom-title {
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zoom-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.zoom-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.zoom-btn:hover:not(:disabled) {
+  border-color: var(--vp-c-brand-1);
+  background: rgba(240, 68, 22, 0.25);
+}
+
+.zoom-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.zoom-btn:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+.zoom-text {
+  font-size: 0.85rem;
+}
+
+.zoom-close {
+  margin-left: 8px;
+}
+
+.zoom-level {
+  min-width: 52px;
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.zoom-stage {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.zoom-stage > .vp-doc {
+  width: min(1200px, 100%);
+  margin: auto 0;
+}
+
+.zoom-stage .vp-doc div.zoom-code {
+  margin: 0;
+  border-radius: 12px;
+}
+
+.zoom-stage .vp-doc div.zoom-code pre {
+  max-height: none;
+  overflow: auto;
+}
+
+.zoom-stage .vp-doc div.zoom-code code {
+  font-size: calc(14px * var(--zoom));
+}
+
+.zoom-stage .vp-doc div.zoom-code .copy,
+.zoom-stage .vp-doc div.zoom-code .lang,
+.zoom-stage .vp-doc div.zoom-code .code-zoom-open,
+.zoom-stage .vp-doc div.zoom-code .code-toggle {
+  display: none;
+}
+
+.zoom-image {
+  max-width: none;
+  height: auto;
+  margin: auto;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .zoom-bar {
+    padding: 10px 12px;
+  }
+
+  .zoom-stage {
+    padding: 12px;
+  }
+
+  .zoom-actions {
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoom-modal {
+    animation: none;
+  }
+}
