@@ -151,7 +151,7 @@
   box-shadow: 0 8px 20px rgba(22, 12, 27, 0.12);
 }
 
-.vp-doc .doc-image-lightbox {
+.doc-image-lightbox {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -163,7 +163,7 @@
   cursor: pointer;
 }
 
-.vp-doc .doc-image-lightbox img {
+.doc-image-lightbox img {
   display: block;
   max-width: 95vw;
   max-height: 95vh;

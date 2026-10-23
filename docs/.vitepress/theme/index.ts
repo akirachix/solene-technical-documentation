@@ -4,11 +4,7 @@ import "./style.css";
 
 const shouldEnableExpandableMedia = () => {
   if (typeof window === "undefined") return false;
-  const pathname = window.location.pathname;
-  return (
-    pathname.includes("/frontend-web") ||
-    pathname.includes("/design-guidelines")
-  );
+  return true;
 };
 
 const closeImageLightbox = () => {
@@ -26,6 +22,7 @@ const openImageLightbox = (image: HTMLImageElement) => {
   const clone = image.cloneNode(true) as HTMLImageElement;
   clone.style.border = "none";
   clone.style.boxShadow = "none";
+  clone.style.cursor = "default";
   clone.addEventListener("click", (event) => {
     event.stopPropagation();
   });
@@ -38,16 +35,21 @@ const openImageLightbox = (image: HTMLImageElement) => {
 const bindExpandableMedia = () => {
   if (!shouldEnableExpandableMedia()) return;
 
-  document.querySelectorAll(".vp-doc img").forEach((image) => {
+  document.querySelectorAll("img").forEach((image) => {
     const img = image as HTMLImageElement;
+    const isInsideDoc = img.closest(".vp-doc") !== null;
+    if (!isInsideDoc) return;
     if (img.dataset.expandableBound === "true") return;
+
     img.dataset.expandableBound = "true";
     img.classList.add("expandable-trigger");
     img.title = "Click to expand image";
-    img.addEventListener("click", (event) => {
+    img.style.cursor = "zoom-in";
+    img.onclick = (event) => {
+      event.preventDefault();
       event.stopPropagation();
       openImageLightbox(img);
-    });
+    };
   });
 
   document
@@ -57,9 +59,9 @@ const bindExpandableMedia = () => {
       block.dataset.expandableBound = "true";
       block.classList.add("expandable-code");
       block.title = "Click to expand code block";
-      block.addEventListener("click", () => {
+      block.onclick = () => {
         block.classList.toggle("is-expanded");
-      });
+      };
     });
 };
 
