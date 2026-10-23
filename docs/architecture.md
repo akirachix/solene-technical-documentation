@@ -12,7 +12,7 @@ Is a high-level visual blueprint that maps out the structural design of a softwa
 * **Primary Goal**: To illustrate exactly how data moves through the ecosystem and how components interact to satisfy business logic.
 
 <a href="public/solène SAD.png" target="_blank">
-  <img src="/home/student/solene-technical-documentation/docs/public/solène SAD.png" alt="Click to expand" width="1000" />
+  <img src="public/solène SAD.png" alt="Click to expand" width="1000" />
 </a>
 
 ## Secure SAD
