@@ -45,11 +45,11 @@ npm install
 npm run dev
 ```
 
-Then open:
+Then open the app in your browser on port 3000.
 
+```text
 http://localhost:3000
-
-````
+```
 
 If the app does not load as expected, check whether the backend URL or session cookie environment values are populated and whether a stale development server is still running on port 3000.
 
@@ -69,7 +69,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 NEXT_PUBLIC_FIREBASE_VAPID_KEY=
 NEXT_PUBLIC_MAPTILER_KEY=
-````
+```
 
 The exact value of `CANOPY_API_URL` depends on the backend environment you are targeting. If you are working on a local backend, make sure the URL matches that service. If a value is missing, the app may still start in some cases, but API flows will fail or be partially functional.
 

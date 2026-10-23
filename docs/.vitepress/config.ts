@@ -6,7 +6,6 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   appearance: false,
-  ignoreDeadLinks: [/^http:\/\/localhost:3000$/],
   head: [["link", { rel: "icon", href: "/canopy-favicon.png" }]],
   themeConfig: {
     siteTitle: false,
@@ -50,7 +49,6 @@ export default defineConfig({
         items: [
           { text: "Developer Guide", link: "/developer-guide" },
           { text: "Design", link: "/design-guidelines" },
-          { text: "Limitations", link: "/limitations" },
         ],
       },
     ],
