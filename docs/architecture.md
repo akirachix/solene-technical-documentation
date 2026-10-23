@@ -387,7 +387,7 @@ The AI cannot:
 
 After an answer is displayed, the doctor may submit positive or negative feedback with an optional comment. Feedback is linked to the stored response_id, not to an arbitrary frontend message identifier.
 
-👉 [Read the full documentation here](docs/ai.md)
+👉 [Read the full documentation here](ai.md)
 
 
 
