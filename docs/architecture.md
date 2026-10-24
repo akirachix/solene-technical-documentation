@@ -6,7 +6,35 @@ Canopy is designed to support mountain gorilla health monitoring by connecting f
 
 The central architectural principle is continuity of a health case. A field observation should remain connected to the veterinary review it triggers, the decision made, the follow-up assigned, and the eventual outcome. Information should not become disconnected across separate records or communication channels. The platform is intended to complement existing conservation and veterinary systems rather than replace them.
 
-[Canopy SAD](https://lucid.app/lucidchart/3bed14f6-0cf8-492f-b173-2438326808ae/edit?invitationId=inv_9f61c8ef-ee56-41a7-be90-a3115e7ba658&page=0_0#)
+## System Architecture Diagram
+
+Is a high-level visual blueprint that maps out the structural design of a software application or infrastructure. It serves as the foundational roadmap for developers, stakeholders, and engineers to understand how the system functions as a whole.
+
+* **Primary Goal**: To illustrate exactly how data moves through the ecosystem and how components interact to satisfy business logic.
+
+<a href="public/solène SAD.png" target="_blank">
+  <img src="public/solène SAD.png" alt="Click to expand" width="1000" />
+</a>
+
+## Secure SAD
+
+Takes the standard SAD template and overlays a comprehensive layer of cybersecurity controls, threat boundaries, and defensive mechanisms. It is used to prove that a system complies with strict security policies.
+
+* **Core Focus**: Data protection, access control, vulnerability mitigation, and perimeter defense.
+
+**Key Components Added**
+* Encryption Standards
+* Identity & Access Management (IAM): Where Multi-Factor Authentication (MFA), OAuth2 tokens, and API gateways live.
+* Perimeter Defense: Firewalls, Web Application Firewalls (WAF), and Virtual Private Clouds (VPC).
+* Monitoring & Compliance: Intrusion Detection Systems (IDS), audit logs, and security information event management (SIEM).
+
+* **Primary Goal**: To illustrate how data is protected and where the absolute security boundaries exist within the network architecture.
+
+
+<a href="public/CANOPY platform security architecture.png" target="_blank">
+  <img src="public/CANOPY platform security architecture.png" alt="Click to expand" width="1000" />
+</a>
+
 
 ## Components & Responsibilities
 
@@ -203,27 +231,34 @@ This creates a connected history instead of a collection of unrelated records. T
 
 Provides weather and environmental data used by the health surveillance and prediction workflow. The application requests relevant environmental data and uses the returned measurements as inputs or context for health risk analysis.
 
-#### 4.2 LocationIQ API
+[Open Meteo](https://open-meteo.com/)
 
-Supports the location workflow including location requests and the retrieval of geographic coordinates. The application uses coordinates to associate relevant observations with geographic areas.
 
-#### 4.3 Gemini Files Search API
+#### 4.2  Gemini Files Search API
 
 Gemini File Search is the knowledge-retrieval and generation service for Canopy AI. Provides retrieval augmented generation over cleaned gorilla health reference documents. Cleaned gorilla health documents are uploaded into a configured File Search Store. The backend sends a question and the store reference to Gemini, receives a grounded answer and citation metadata, and converts that result into CANOPY’s response schema.
 
 The Gemini API key, model name, and File Search Store identifier must remain backend environment variables. They must not be sent to or embedded in the frontend.
 
-#### 4.4 Email provider(SMTP)
+[Gemini File search](https://ai.google.dev/gemini-api/docs/file-search)
+
+#### 4.3  Email provider(SMTP)
 
 Email is used for login OTP and account-related communication. SMTP configuration is backend-only and should never be exposed to the frontend.
 
-#### 4.5 Redis
+[Simple Mail Transfer Protocol](https://www.smtp.com/email-api/?afid=partnerstack&utm_source=partner&gclid=CjwKCAjwi-zWBhAdEiwAqlRf-G3SBMqMIwsmRCCcsMYF0VMREavKwGN2WvKO57kvyjg2bt1aKFNNrxoCxLIQAvD_BwE&gbraid=0AAAAAphr3jv3qfiLUtvGqkLBzM8ccM70f&gad_campaignid=20083745898&gad_source=1&ps_partner_key=c2VtYW50aWNsYWJz&pscd=pstk.smtp.com&sid=1-g-CjwKCAjwi-zWBhAdEiwAqlRf-G3SBMqMIwsmRCCcsMYF0VMREavKwGN2WvKO57kvyjg2bt1aKFNNrxoCxLIQAvD_BwE&utm_medium=semanticlabs&utm_campaign=partnerstack&source=partner&gspk=c2VtYW50aWNsYWJz)
+
+#### 4.4  Redis
 
 Redis stores short-lived authentication states such as OTP information and rate-limiting or login-flow data. Redis is not the authoritative store for health records.
 
-#### 4.6 Mapping service
+[ Redis](https://redis.io/)
+
+#### 4.5  Mapping service
 
 The map component visualizes location grids, gorilla-related observations, and risk distributions. Because location data can be sensitive, the API must apply role-based restrictions before returning it.
+
+[Maptiler ](https://www.maptiler.com/)
 
 ## Authentication Flow
 
@@ -272,13 +307,26 @@ A normal API request follows these steps:
 13. The proxy returns the backend response to the browser.
 14. The frontend updates its local page state
 
-```
+
+### Request
+
+<details>
+<summary><b>Click to expand request payload</b></summary>
+
+```json
 {
   "question": "What preventive measures can reduce respiratory disease transmission?"
 }
 ```
 
-```
+</details>
+
+### Response
+
+<details>
+<summary><b>Click to expand response data</b></summary>
+
+```json
 {
   "response_id": "uuid",
   "answer": "Generated answer grounded in the configured reference store.",
@@ -293,6 +341,9 @@ A normal API request follows these steps:
   ]
 }
 ```
+
+</details>
+
 
 ## AI Flow
 
@@ -335,3 +386,5 @@ The AI cannot:
 #### AI feedback flow
 
 After an answer is displayed, the doctor may submit positive or negative feedback with an optional comment. Feedback is linked to the stored response_id, not to an arbitrary frontend message identifier.
+
+👉 [Read the full documentation here](ai.md)
