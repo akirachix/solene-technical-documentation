@@ -1,12 +1,21 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
+  base: "/solene-technical-documentation/",
   title: "Canopy",
   description: "Technical documentation for Canopy",
   cleanUrls: true,
   lastUpdated: true,
   appearance: false,
-  head: [["link", { rel: "icon", href: "/canopy-favicon.png" }]],
+  head: [
+    [
+      "link",
+      {
+        rel: "icon",
+        href: "/solene-technical-documentation/canopy-favicon.png",
+      },
+    ],
+  ],
   themeConfig: {
     siteTitle: false,
     logo: "/canopy-icon.png",

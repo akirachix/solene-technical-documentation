@@ -423,3 +423,70 @@
   font-size: 0.95rem;
   margin-top: auto;
 }
+
+/* Design & Guidelines page: colour swatches and badge previews */
+.ds-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.ds-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: #fbf8f1;
+  border: 1px solid var(--vp-c-border);
+  border-radius: 16px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.ds-chip {
+  display: block;
+  height: 64px;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+}
+
+.ds-chip--light {
+  box-shadow: inset 0 0 0 1px rgba(32, 33, 36, 0.12);
+}
+
+.ds-swatch strong {
+  color: var(--vp-c-text-1);
+}
+
+.ds-swatch code {
+  align-self: flex-start;
+}
+
+.ds-swatch small {
+  color: var(--vp-c-text-2);
+  font-size: 0.8rem;
+}
+
+.ds-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.ds-badge--round {
+  border-radius: 9999px;
+  padding: 0.35rem 1rem;
+  font-weight: 500;
+}
