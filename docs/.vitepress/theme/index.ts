@@ -1,5 +1,6 @@
 import DefaultTheme from 'vitepress/theme'
 import type { Theme } from 'vitepress'
+import ImageZoom from './components/ImageZoom.vue'
 import { useRoute } from 'vitepress'
 import { nextTick, onMounted, watch } from 'vue'
 import { enhanceCodeBlocks, enhanceImages } from './zoom'
@@ -8,6 +9,10 @@ import './zoom.css'
 
 export default {
   extends: DefaultTheme,
+  enhanceApp({ app }) {
+    app.component('ImageZoom', ImageZoom)
+  },
+} satisfies Theme
   setup() {
     const route = useRoute()
     const enhance = () =>
