@@ -93,8 +93,12 @@ canopy/
 
 Dependencies only point **downwards**. A screen never calls a service or the database directly, and services know nothing about the UI.
 
-```
-Screen  →  ViewModel  →  Repository  →  DAO / Service  →  SQLite / API / Phone
+```mermaid
+flowchart LR
+  A[Screen] --> B[ViewModel]
+  B --> C[Repository]
+  C --> D[DAO / Service]
+  D --> E[SQLite / API / Phone]
 ```
 
 ## 3. Core Architectural Components

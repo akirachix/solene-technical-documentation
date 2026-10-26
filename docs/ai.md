@@ -27,26 +27,16 @@ End-to-end flow of a prediction:
 6. It saves the predictions that pass, with links to their evidence, their papers and a provenance record, in one transaction.
 7. Vets see the result on the case page, the Overview and the map, and approve or reject each recommendation; those decisions feed into the next prompt.
 
-```text
-Frontend ──► POST /api/v1/ai/predictions
-               │
-               ▼
-        _collect()  ── observations (O), weather (W), cases (H), vet feedback
-               │
-               ▼
-        PREDICTION_PROMPT + SYSTEM_RULES + <field_data>
-               │
-               ▼
-        Gemini generateContent ── tools: fileSearch ──► reference library
-               │                                         (File Search store)
-               ▼
-        JSON answer + groundingMetadata (cited papers)
-               │
-               ▼
-        checks: refs, grounding, papers, safety, calibration
-               │
-               ▼
-        _save_all() ──► disease_predictions + links + provenance
+```mermaid
+flowchart TD
+    A[Frontend request] --> B[POST /api/v1/ai/predictions]
+    B --> C[Collect observations, weather, cases, and vet feedback]
+    C --> D[Build prompt from prediction rules and field data]
+    D --> E[Gemini generateContent]
+    E --> F[File Search reference library]
+    E --> G[JSON answer and grounding metadata]
+    G --> H[Validate references, grounding, safety, and calibration]
+    H --> I[Save predictions, evidence links, and provenance]
 ```
 
 ## 2. Components
@@ -1106,11 +1096,12 @@ Saved predictions reach vets in three places, and their decisions on recommendat
 
 The browser never calls Gemini or the backend directly: Next.js route handlers forward each request with the user's session token.
 
-```text
-Browser ──► /api/ai/predictions (Next.js route handler)
-              │  reads session cookie, adds Authorization: Bearer <token>
-              ▼
-           FastAPI /api/v1/ai/predictions ──► Gemini
+```mermaid
+flowchart LR
+    A[Browser] --> B[Next.js API route]
+    B --> C[Read session cookie and add bearer token]
+    C --> D[FastAPI AI endpoint]
+    D --> E[Gemini]
 ```
 
 ## 12. Errors, tests and known limitations

@@ -271,25 +271,18 @@ The map component visualizes location grids, gorilla-related observations, and r
 
 ## Authentication Flow
 
-User submits credentials
-↓
-Backend validates email and password hash
-↓
-Backend creates OTP and stores temporary state in Redis
-↓
-OTP is sent by email
-↓
-User submits OTP
-↓
-Backend validates and consumes OTP
-↓
-Backend creates access token
-↓
-Next.js stores token in HTTP-only canopy_session cookie
-↓
-Proxy forwards bearer token to FastAPI
-↓
-FastAPI loads user and applies role permissions
+```mermaid
+flowchart TD
+  A[User submits credentials] --> B[Backend validates email and password hash]
+  B --> C[Backend creates OTP and stores temporary state in Redis]
+  C --> D[OTP is sent by email]
+  D --> E[User submits OTP]
+  E --> F[Backend validates and consumes OTP]
+  F --> G[Backend creates access token]
+  G --> H[Next.js stores token in HTTP-only canopy_session cookie]
+  H --> I[Proxy forwards bearer token to FastAPI]
+  I --> J[FastAPI loads user and applies role permissions]
+```
 
 A request fails with `401 Unauthorized` when the token is missing, invalid, expired, malformed, or associated with a user that cannot be loaded. A valid token with an insufficient role produces `403 Forbidden`.
 
@@ -358,21 +351,18 @@ CANOPY contains multiple AI-assisted flows that must be kept conceptually separa
 
 ### Canopy AI question-answering flow
 
-Doctor enters question
-↓
-Frontend POSTs question through same-origin proxy
-↓
-FastAPI validates doctor role and question schema
-↓
-Preventive/Canopy AI service calls Gemini adapter
-↓
-Gemini retrieves relevant passages from File Search Store
-↓
-Gemini generates grounded answer and source metadata
-↓
-Backend validates and returns the answer; the endpoint summary says it is not saved as a disease-prediction record. Persistence of response metadata or feedback remains unverified.
-↓
-Frontend displays answer and sources
+```mermaid
+flowchart TD
+  A[Doctor enters question] --> B[Frontend POSTs through same-origin proxy]
+  B --> C[FastAPI validates doctor role and question schema]
+  C --> D[AI service calls Gemini adapter]
+  D --> E[Gemini retrieves passages from File Search]
+  E --> F[Gemini generates answer and source metadata]
+  F --> G[Backend validates and returns answer]
+  G --> H[Frontend displays answer and sources]
+```
+
+The endpoint summary says the answer is not saved as a disease-prediction record. Persistence of response metadata or feedback remains unverified.
 
 ### Prediction Flow
 

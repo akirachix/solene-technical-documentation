@@ -1,70 +1,79 @@
 import { defineConfig } from "vitepress";
+import { withMermaid } from "vitepress-plugin-mermaid";
 
-export default defineConfig({
-  base: "/solene-technical-documentation/",
-  title: "Canopy",
-  description: "Technical documentation for Canopy",
-  cleanUrls: true,
-  lastUpdated: true,
-  appearance: true,
-  head: [
-    [
-      "link",
-      {
-        rel: "icon",
-        href: "/solene-technical-documentation/canopy-favicon.png",
+export default withMermaid(
+  defineConfig({
+    base: "/solene-technical-documentation/",
+    title: "Canopy",
+    description: "Technical documentation for Canopy",
+    cleanUrls: true,
+    ignoreDeadLinks: false,
+    lastUpdated: true,
+    appearance: true,
+    vite: {
+      optimizeDeps: {
+        include: ["mermaid"],
       },
-    ],
-  ],
-  themeConfig: {
-    siteTitle: false,
-    logo: {
-      light: "/canopy-icon.png",
-      dark: "/darkmode-logo.png",
     },
-    nav: [
-      { text: "Overview", link: "/overview" },
-      { text: "Architecture", link: "/architecture" },
-      { text: "Backend", link: "/backend" },
-      { text: "Frontend", link: "/frontend-web" },
-      { text: "Security", link: "/security" },
-      { text: "Design System", link: "/design-guidelines" },
-      { text: "Deployment", link: "/deployment" },
+    head: [
+      [
+        "link",
+        {
+          rel: "icon",
+          href: "/solene-technical-documentation/canopy-favicon.png",
+        },
+      ],
     ],
-    sidebar: [
-      {
-        text: "Getting Started",
-        items: [
-          { text: "Home", link: "/" },
-          { text: "Overview", link: "/overview" },
-        ],
+    themeConfig: {
+      siteTitle: false,
+      logo: {
+        light: "/canopy-icon.png",
+        dark: "/darkmode-logo.png",
       },
-      {
-        text: "Client Applications",
-        items: [
-          { text: "Architecture", link: "/architecture" },
-          { text: "Backend / API", link: "/backend" },
-          { text: "Mobile App", link: "/frontend-mobile" },
-          { text: "Web App", link: "/frontend-web" },
-        ],
-      },
-      {
-        text: "Operations",
-        items: [
-          { text: "Security", link: "/security" },
-          { text: "AI Module", link: "/ai" },
-          { text: "Deployment", link: "/deployment" },
-        ],
-      },
-      {
-        text: "Guides",
-        items: [
-          { text: "Developer Guide", link: "/developer-guide" },
-          { text: "Design", link: "/design-guidelines" },
-        ],
-      },
-    ],
-    search: { provider: "local" },
-    outline: { level: [2, 3] },
-  },
-});
+      nav: [
+        { text: "Overview", link: "/overview" },
+        { text: "Architecture", link: "/architecture" },
+        { text: "Backend", link: "/backend" },
+        { text: "Frontend", link: "/frontend-web" },
+        { text: "Security", link: "/security" },
+        { text: "Design System", link: "/design-guidelines" },
+        { text: "Deployment", link: "/deployment" },
+      ],
+      sidebar: [
+        {
+          text: "Getting Started",
+          items: [
+            { text: "Home", link: "/" },
+            { text: "Overview", link: "/overview" },
+          ],
+        },
+        {
+          text: "Client Applications",
+          items: [
+            { text: "Architecture", link: "/architecture" },
+            { text: "Backend / API", link: "/backend" },
+            { text: "Mobile App", link: "/frontend-mobile" },
+            { text: "Web App", link: "/frontend-web" },
+          ],
+        },
+        {
+          text: "Operations",
+          items: [
+            { text: "Security", link: "/security" },
+            { text: "AI Module", link: "/ai" },
+            { text: "Deployment", link: "/deployment" },
+          ],
+        },
+        {
+          text: "Guides",
+          items: [
+            { text: "Developer Guide", link: "/developer-guide" },
+            { text: "Design", link: "/design-guidelines" },
+          ],
+        },
+      ],
+      search: { provider: "local" },
+      outline: { level: [2, 3] },
+    },
+  }),
+);
