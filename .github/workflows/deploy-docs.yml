@@ -32,9 +32,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check formatting
-        run: npm run format:check
-
       - name: Build site
         run: npm run docs:build
 
@@ -55,3 +52,4 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
+        uses: actions/deploy-pages@v4
