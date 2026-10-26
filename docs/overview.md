@@ -1,7 +1,7 @@
 ---
 title: Overview
 description: What Canopy is, the problem it solves, how the research shaped it, and what it does, explained for readers new to mountain gorilla conservation.
-status: draft
+status: Verified
 ---
 
 # Overview
