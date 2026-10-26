@@ -4,6 +4,8 @@ Technical documentation for **Canopy**, the Solene gorilla health monitoring pla
 
 The site is built with [VitePress](https://vitepress.dev).
 
+This repository contains the documentation site, not the Canopy application source. Backend, web, and mobile implementation details refer to separately maintained project repositories. A page marked `review` has not been independently verified against those source repositories in this workspace.
+
 ## Contents
 
 | Page                | What it covers                                                |
@@ -18,7 +20,6 @@ The site is built with [VitePress](https://vitepress.dev).
 | Deployment          | Hosting, environments and releases                            |
 | Design & Guidelines | Colours, components, accessibility and writing rules          |
 | Developer Guide     | Setting up and running Canopy locally                         |
-| Documentation Guide | How these docs are organised and written                      |
 
 ## Getting started
 
@@ -86,7 +87,7 @@ Each Markdown file in `docs/` becomes a page: `docs/security.md` is served at `/
    # Your Page
    ```
 
-2. Add it to the sidebar in `docs/.vitepress/config.ts`:
+2. Add it to the appropriate sidebar section in `docs/.vitepress/config.ts`, inside that section's `items` array:
 
    ```ts
    { text: 'Your Page', link: '/your-page' },
@@ -96,12 +97,12 @@ Each Markdown file in `docs/` becomes a page: `docs/security.md` is served at `/
 
 Set `status` in each page's header so the team can see progress:
 
-| Status     | Meaning                       |
-| ---------- | ----------------------------- |
-| `planned`  | Title only, not started       |
-| `draft`    | Being written                 |
-| `review`   | Ready for a teammate to check |
-| `complete` | Reviewed and up to date       |
+| Status     | Meaning                                                       |
+| ---------- | ------------------------------------------------------------- |
+| `planned`  | Title only, not started                                       |
+| `draft`    | Being written                                                 |
+| `review`   | Ready for review; implementation claims may remain unverified |
+| `complete` | Checked against current project evidence and reviewed         |
 
 ### Writing rules
 
@@ -118,7 +119,7 @@ Set `status` in each page's header so the team can see progress:
 
 1. Create a branch: `git checkout -b docs/<page-name>`
 2. Write or update the page.
-3. Run `npm run docs:build` to make sure the site builds. It fails on broken links.
+3. Run `npm run docs:build` to build the site and check the internal Markdown links validated by VitePress. Also check raw HTML links and external URLs, which may not be caught by the build.
 4. Commit, push and open a pull request for review.
 
 ## Related repositories
