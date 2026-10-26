@@ -75,6 +75,11 @@ html.dark {
   font-weight: 600;
 }
 
+.VPSidebar .VPSidebarItem.is-active > .item {
+  background-color: color-mix(in srgb, var(--vp-c-brand-1) 11%, transparent);
+  border-radius: 4px;
+}
+
 .VPNavBar {
   background-color: var(--vp-c-bg) !important;
   border-bottom: 1px solid var(--vp-c-border);
@@ -152,6 +157,20 @@ html.dark {
 
 .vp-doc div[class*="language-"] code {
   color: var(--vp-c-text-1) !important;
+}
+
+.vp-doc div[class*="language-"] pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.vp-doc div[class*="language-"] pre code {
+  white-space: pre;
+}
+
+.vp-doc .mermaid {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* Expandable media for frontend web and design docs */
