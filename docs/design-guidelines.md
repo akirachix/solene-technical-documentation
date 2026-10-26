@@ -1,8 +1,7 @@
 ---
 title: Design System
 description: Visual identity, style guides, and UI assets for Solene and Canopy.
-status: verified
-evidence: []
+status: review
 ---
 
 # Design System
@@ -91,7 +90,7 @@ Both Solene and Canopy use a dual-font system to balance editorial elegance with
 
 ### Color Palette
 
-The product (Canopy) uses the warm, functional palette documented in the `tech-stack` and `frontend` guides. Below are the exact hex codes used in the Tailwind configuration and CSS variables.
+The Canopy palette shown here is a design reference. This workspace does not include the product's Tailwind configuration or CSS variables, so these swatches have not been verified against the implementation. For the web application's documented stack, see [Frontend Web](/frontend-web); confirm production token values against the Figma source before using them in code.
 
 <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
   <div style="flex: 1; padding: 2rem; background-color: #FF5A1F; border-radius: 8px; color: white; font-weight: bold; text-align: center;">
@@ -148,4 +147,4 @@ The implemented interface for the Flutter application, showcasing the observatio
 
 ## 5. Summary & Implementation
 
-By utilizing the shared technical tokens defined in this guide (such as the `#F7F2E8` background and `#F04416` action orange), developers can ensure that new features integrate seamlessly with the existing VitePress documentation and the frontend React/Flutter applications. All future UI components should be built by referencing the Figma source files and using the exact typography and color tokens listed above to maintain a cohesive, accessible, and trustworthy experience for our conservation teams.
+Use the palette and typography samples above as design references, and confirm their current values in the linked Figma files before implementation. The product source repositories are not included here, so this page does not claim that the displayed values match the current web or mobile code.

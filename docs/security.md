@@ -1,25 +1,14 @@
 ---
 title: Security
 description: Canopy's authentication, authorization, data protection, and controls.
-status: Verified
-evidence:
-  - core/security.py
-  - core/dependencies.py
-  - core/client_ip.py
-  - services/auth_service.py
-  - services/errors.py
-  - services/security_headers.py
-  - services/observation_image_service.py
-  - main.py
-  - models/audit_log.py
-  - core/db_audit.py
+status: review
 ---
 
 # Security
 
 CANOPY holds individual gorilla health records, case decisions, staff accounts and field locations. Precise gorilla locations are treated as Highly Restricted because their disclosure could create a poaching risk. This page describes the controls the backend enforces today and how they map to the target security architecture.
 
-Every rule on this page is enforced by the FastAPI backend. The web portal and the mobile app only hide screens; they are never the security boundary.
+The FastAPI backend is the intended security boundary; client-side screen hiding is not an authorization control. The controls below describe the implementation status reported by the project documentation. This workspace contains no backend or mobile source, so those implementation claims have not been independently verified here. The known endpoint and role gaps below are exceptions to complete enforcement.
 
 ## Security architecture
 
@@ -33,24 +22,24 @@ The diagram shows the target design. Some parts are not built yet (Keycloak, Clo
 
 ### Status of controls
 
-| Area                 | Control                                                                             | Status                          |
-| -------------------- | ----------------------------------------------------------------------------------- | ------------------------------- |
-| Authentication       | Argon2 passwords, emailed 6-digit login code, 30-minute JWT                         | Implemented                     |
-| Authentication       | Lockout and per-IP limit stored in Redis, login code caps                           | Implemented (SOL-421)           |
-| Authentication       | Keycloak (OIDC), refresh tokens, device binding, PIN unlock                         | Planned                         |
-| Authorization        | Role checks on the server, object-level checks for trackers                         | Implemented                     |
-| Authorization        | Login required on every endpoint                                                    | In progress (endpoint securing) |
-| Authorization        | PostgreSQL row-level security                                                       | Planned                         |
-| Data protection      | TLS with HSTS and HTTPS redirect                                                    | Implemented (SOL-421)           |
-| Data protection      | Generic push text, grid cells instead of raw GPS on observations                    | Implemented                     |
-| Data protection      | Backup database on Supabase                                                         | Implemented                     |
-| Data protection      | EXIF/GPS stripping of photos                                                        | Planned (gap)                   |
-| Application security | Strict schemas, request size limits, safe errors, security headers, CORS allow-list | Implemented (SOL-421)           |
-| Audit                | Audit log of updates and deletes, with actor, role and IP                           | Implemented                     |
-| Audit                | Hash chain to make the audit log tamper-evident                                     | Planned                         |
-| AI                   | Output validation, safety filters, per-user rate limit                              | Implemented                     |
-| AI                   | Pseudonymised AI gateway                                                            | Planned                         |
-| Monitoring           | SIEM and security alerts                                                            | Planned                         |
+| Area                 | Control                                                                             | Status                                                      |
+| -------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Authentication       | Argon2 passwords, emailed 6-digit login code, 30-minute JWT                         | Implemented                                                 |
+| Authentication       | Lockout and per-IP limit stored in Redis, login code caps                           | Implemented (SOL-421)                                       |
+| Authentication       | Keycloak (OIDC), refresh tokens, device binding, PIN unlock                         | Planned                                                     |
+| Authorization        | Role checks on the server, object-level checks for trackers                         | Implemented                                                 |
+| Authorization        | Login required on every endpoint                                                    | In progress (endpoint securing)                             |
+| Authorization        | PostgreSQL row-level security                                                       | Planned                                                     |
+| Data protection      | TLS with HSTS and HTTPS redirect                                                    | Implemented (SOL-421)                                       |
+| Data protection      | Generic push text, grid cells instead of raw GPS on observations                    | Implemented                                                 |
+| Data protection      | Backup database on Supabase                                                         | Implemented                                                 |
+| Data protection      | Mobile-client EXIF/GPS stripping of photos                                          | Documented in mobile guide; backend does not strip metadata |
+| Application security | Strict schemas, request size limits, safe errors, security headers, CORS allow-list | Implemented (SOL-421)                                       |
+| Audit                | Audit log of updates and deletes, with actor, role and IP                           | Implemented                                                 |
+| Audit                | Hash chain to make the audit log tamper-evident                                     | Planned                                                     |
+| AI                   | Output validation, safety filters, per-user rate limit                              | Implemented                                                 |
+| AI                   | Pseudonymised AI gateway                                                            | Planned                                                     |
+| Monitoring           | SIEM and security alerts                                                            | Planned                                                     |
 
 ## Authentication
 
@@ -132,6 +121,8 @@ Object-level rules:
 - `/disease-predictions/*` and `/api/v1/locations` do not require a login yet (gaps G-01, G-02).
 - The `HEALTH_READERS` role set includes `admin`, so admins can currently read health cases and predictions. This breaks the rule that admins see no clinical data.
 
+**Release gate:** Treat these entries as unresolved security blockers until the backend owner confirms the current route configuration, changes any affected authorization rules, and supplies tests showing anonymous requests are denied and clinical records are not exposed to admins. This documentation repository cannot verify or implement those backend controls.
+
 **Row-level security.** PostgreSQL row-level security is the planned second layer, starting with observations, follow-up tasks, notifications and device tokens, and health cases. It will enforce the same ownership rules inside the database, so a missed check in the API cannot expose another user's rows.
 
 ## Data Protection
@@ -152,7 +143,9 @@ Object-level rules:
 
 Planned: chaining each entry to the previous one with a hash, so that editing or deleting a log entry can be detected.
 
-**Gaps.** Photos are stored as uploaded, so EXIF metadata, including GPS position if the phone recorded it, is kept. Metadata stripping is planned in the media pipeline. The offline queue on the phone is protected by the app sandbox but not encrypted by the app (see the Mobile section).
+**Photo metadata.** The backend stores uploaded photo bytes without stripping EXIF. The mobile guide says the app removes photo metadata before upload, but that client-side behavior has not been verified against mobile source in this workspace. Other API clients may therefore upload photos containing metadata.
+
+**Mobile data at rest.** The mobile guide documents SQLCipher encryption for the local database and AES-256-GCM encryption for locally stored photos. This conflicts with older wording that described the offline queue as unencrypted; the mobile guide's implementation claim is the current documented position, but remains unverified here.
 
 ## Application Security
 

@@ -1,7 +1,7 @@
 ---
 title: Deployment
 description: Where each part of Canopy runs, how it is configured, and how releases, monitoring and recovery work.
-status: Verified
+status: review
 ---
 
 # Deployment
@@ -16,7 +16,7 @@ Canopy has four deployable parts. They are released separately, but they depend 
 | ---------------------- | ----------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------ |
 | **Backend API**        | FastAPI (Python 3.11+)  | Heroku                                                 | A pull request is merged into `main` of `solene-backend`                 | [Backend](/backend)            |
 | **Database**           | PostgreSQL with PostGIS | Heroku Postgres add-on, with a backup copy on Supabase | Schema changes run automatically on each backend release                 | [Backend §4](/backend)         |
-| **Web portal**         | Next.js                 | _To confirm: hosting platform and URL_                 | _To confirm_                                                             | [Web App](/frontend-web)       |
+| **Web portal**         | Next.js                 | Not documented in this repository                      | Not documented; confirm with the deployment owner                        | [Web App](/frontend-web)       |
 | **Mobile app**         | Flutter                 | Installed on trackers' phones (Android APK)            | A new release build is shared with trackers                              | [Mobile App](/frontend-mobile) |
 | **Documentation site** | VitePress               | GitHub Pages                                           | A pull request is merged into `main` of `solene-technical-documentation` | This site                      |
 
@@ -165,7 +165,7 @@ Set `CANOPY_API_URL` and `NEXT_PUBLIC_MAPTILER_KEY` in the hosting platform befo
 
 After deploying, add the portal's URL to the backend's `ALLOWED_ORIGINS` and use it as `FRONTEND_URL`, so CORS and email links work.
 
-> **To confirm:** the hosting platform, production URL and whether it deploys automatically from `main`.
+**Deployment information required before using this procedure:** the production hosting platform and URL, deployment trigger/branch, environment-variable setup location, and log access. These details are not present in this repository. Confirm them with the web deployment owner; do not infer them from the backend or documentation-site hosting.
 
 ## 6. Mobile app: build and release
 
@@ -179,7 +179,7 @@ The APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
 
 `ObservationService` and `GridService` have their own default address, so when pointing the app at a **different** server, check that both use the same `API_URL`. See [Mobile App §8.3](/frontend-mobile).
 
-> **To confirm:** how release builds are signed and shared with trackers (direct APK, Play Store or another channel).
+**Release information required before distributing an APK:** signing-key custody and rotation, build/release owner, distribution channel, versioning, and rollback/revocation process. These details are not present in this repository; confirm them with the mobile release owner before publishing builds.
 
 ## 7. Health checks
 
@@ -205,9 +205,9 @@ curl -i https://<backend-url>/health
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | Backend logs       | `heroku logs --tail -a <app-name>`                                                                                            |
 | Unexpected errors  | Logged with an `error_id`. The client receives the same `error_id`, so a user can quote it and support can find the log entry |
-| Audit trail        | Platform-wide audit log with a hash chain (see [Security](/security))                                                         |
+| Audit trail        | Audit log of updates and deletes; entries are not hash-chained (see [Security](/security))                                    |
 | Scheduled job runs | Heroku Scheduler dashboard and `heroku logs`                                                                                  |
-| Web portal logs    | _To confirm: hosting platform logs_                                                                                           |
+| Web portal logs    | Not documented here; confirm the hosting provider and log-access procedure with the web deployment owner                       |
 
 There is no automated monitoring or alerting yet. Uptime checks, error tracking and a SIEM are planned (see [Security](/security)).
 
@@ -236,7 +236,7 @@ There is no automated monitoring or alerting yet. Uptime checks, error tracking 
 This site is built with VitePress and deployed by GitHub Actions (`.github/workflows/deploy-docs.yml`) on every push to `main`:
 
 1. `npm ci` installs dependencies.
-2. `npm run docs:build` builds the site into `docs/.vitepress/dist`. The build fails on dead links.
+2. `npm run docs:build` builds the site into `docs/.vitepress/dist`. The build verifies that the documentation site renders, but it does not reliably detect raw HTML links or validate external URLs; review those separately.
 3. The site is published to GitHub Pages at `https://akirachix.github.io/solene-technical-documentation/`.
 
 GitHub Pages must be enabled for the repository (**Settings → Pages → Source → GitHub Actions**), which needs admin access.

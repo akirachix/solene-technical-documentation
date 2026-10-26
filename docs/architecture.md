@@ -1,3 +1,11 @@
+---
+title: System Architecture
+description: Canopy components, data flows, integrations, and trust boundaries.
+status: review
+---
+
+> **Evidence boundary:** The application repositories are not included in this workspace. The architecture and flows below describe the supplied project documentation and have not been independently verified against runtime or source code.
+
 <script setup>
 import { withBase } from 'vitepress'
 </script>
@@ -14,7 +22,7 @@ The central architectural principle is continuity of a health case. A field obse
 
 Is a high-level visual blueprint that maps out the structural design of a software application or infrastructure. It serves as the foundational roadmap for developers, stakeholders, and engineers to understand how the system functions as a whole.
 
-* **Primary Goal**: To illustrate exactly how data moves through the ecosystem and how components interact to satisfy business logic.
+- **Primary Goal**: To illustrate exactly how data moves through the ecosystem and how components interact to satisfy business logic.
 
 <a :href="withBase('/system-architecture.png')" target="_blank">
   <img :src="withBase('/system-architecture.png')" alt="Click to expand" width="1000" />
@@ -24,21 +32,20 @@ Is a high-level visual blueprint that maps out the structural design of a softwa
 
 Takes the standard SAD template and overlays a comprehensive layer of cybersecurity controls, threat boundaries, and defensive mechanisms. It is used to prove that a system complies with strict security policies.
 
-* **Core Focus**: Data protection, access control, vulnerability mitigation, and perimeter defense.
+- **Core Focus**: Data protection, access control, vulnerability mitigation, and perimeter defense.
 
 **Key Components Added**
-* Encryption Standards
-* Identity & Access Management (IAM): Where Multi-Factor Authentication (MFA), OAuth2 tokens, and API gateways live.
-* Perimeter Defense: Firewalls, Web Application Firewalls (WAF), and Virtual Private Clouds (VPC).
-* Monitoring & Compliance: Intrusion Detection Systems (IDS), audit logs, and security information event management (SIEM).
 
-* **Primary Goal**: To illustrate how data is protected and where the absolute security boundaries exist within the network architecture.
+- Encryption Standards
+- Identity & Access Management (IAM): Where Multi-Factor Authentication (MFA), OAuth2 tokens, and API gateways live.
+- Perimeter Defense: Firewalls, Web Application Firewalls (WAF), and Virtual Private Clouds (VPC).
+- Monitoring & Compliance: Intrusion Detection Systems (IDS), audit logs, and security information event management (SIEM).
 
+- **Primary Goal**: To illustrate how data is protected and where the absolute security boundaries exist within the network architecture.
 
 <a :href="withBase('/security-architecture.png')" target="_blank">
   <img :src="withBase('/security-architecture.png')" alt="Click to expand" width="1000" />
 </a>
-
 
 ## Components & Responsibilities
 
@@ -46,7 +53,7 @@ Takes the standard SAD template and overlays a comprehensive layer of cybersecur
 | :--------------------------------- | :---------------------------------------------------------------------------------------------------- |
 | Tracker mobile app                 | Capture health observations and locations, view case status, and complete assigned tasks.             |
 | Veterinarian dashboard             | Review cases, inspect health history and risk signals, make clinical decisions, and assign follow-up. |
-| Admin interface                    | Register and manage users and gorilla records.                                                        |
+| Admin interface                    | Invite and manage user accounts; manage gorilla groups where authorized.                              |
 | User onboarding                    | Manage tracker, veterinarian, and administrator registration and access.                              |
 | Gorilla management                 | Maintain individual gorilla information and related records.                                          |
 | Health case management             | Connect observations, assessments, decisions and follow-up into a traceable case.                     |
@@ -63,11 +70,11 @@ The steps below document the complete health case lifecycle:
 
 - **Observation**: A tracker records an individual gorilla's condition, signs, severity, and relevant contextual information.
 - **Submission and synchronization**: The application submits the observation to the backend when connectivity is available. Offline capture and automatic synchronization are enabled once online.
-- **Record creation**: The backend validates the information and associates it with the relevant gorilla and health case.
+- **Record creation**: The backend validates an observation and associates it with the relevant gorilla or group. A gorilla doctor may separately open a health case and link observations; automatic case creation is not established by the available backend documentation.
 - **Context enrichment**: Relevant history, group information, location, and environmental information are retrieved or added where available.
 - **Risk analysis**: The surveillance and intelligence functions identify potential disease risk signals or patterns for further assessment.
 - **Veterinary review**: A veterinarian reviews the available evidence, uncertainty, and case history before deciding on the appropriate response.
-- **Action and follow-up**: Recommendations or decisions can result in assigned tasks, deadlines, and subsequent observations.
+- **Action and follow-up**: A gorilla doctor can create a follow-up task for an open case. A tracker submits the task outcome as text; the backend gap register says submission does not automatically create or link a new observation.
 - **Outcome and closure**: The case record is updated with decisions and outcomes, maintaining continuity for future reviews.
 
 ## Architecture Layers
@@ -111,12 +118,12 @@ The system supports this process; the veterinarian remains responsible for the c
 
 #### 1.3 Administrator
 
-The administrator manages the users and gorilla records required by the platform.
+The administrator manages user accounts and can manage gorilla groups within the documented permissions.
 
 - Registering tracker and veterinarian accounts.
 - Viewing registered users.
-- Registering gorilla details.
-- Viewing registered gorilla records.
+- Adding gorilla groups (shared with gorilla doctors).
+- The backend documentation assigns individual gorilla registration and clinical record access to gorilla doctors. It also reports an unresolved gap where admins can read some health records.
 
 This separates platform administration from clinical decision making. A user responsible for account management should not automatically receive unrestricted access to sensitive clinical information. The precise permissions assigned to each role are enforced by the application and backend, not just by hiding buttons in the interface.
 
@@ -145,18 +152,17 @@ Maintains the gorilla records used throughout the platform. It supports registra
 
 #### 2.3 Health case Management Module
 
-The module manages the operational lifecycle of a health concern. This part connects an observation to the response that follows.
-It’s documented flow is:
+The module manages the operational lifecycle of a health concern. The documented flow is:
 
-- Receiving and checking reported cases.
+- Receiving observations; a gorilla doctor opens a case through the case endpoint.
 - Retrieving observations and relevant health data.
 - Making case information available for review.
-- Associating follow-up tasks with the relevant case.
+- Linking observations to a case through the explicit link operation and creating follow-up tasks for an open case.
 - Retrieving and displaying case details and status.
 
 A Health Case is not simply a single observation. It is a record that brings together related information about a health concern over time. Depending on what is available and implemented, that information may include the original observation, earlier observations, assessments, diagnostic information, veterinary decisions, follow-up tasks, and the final outcome.
 
-Without case management, a tracker’s observation might exist in one record, the veterinarian’s decision in another, and the follow-up in a separate conversation. Connecting them makes it easier to understand what happened and whether the required action was completed.
+The documented API does not establish that every observation becomes a case, nor that a submitted follow-up outcome becomes a linked observation. These links require explicit case and observation operations; the backend gap register lists automatic outcome linkage as unresolved.
 
 #### 2.4 Health surveillance and prediction Module
 
@@ -186,7 +192,7 @@ The intended flow is:
 - A recommendation is returned.
 - The veterinarian reviews the recommendation before deciding whether to accept or reject it.
 
-This module supports decision making, it does not automatically convert an AI-generated suggestion into a clinical instruction. The existing interface also includes a review queue for proposed recommendations.
+This module supports decision making; it does not automatically convert an AI-generated suggestion into a clinical instruction. The AI documentation describes proposed recommendations and veterinary review. Verify the review queue against the application source before treating its interface as current implementation.
 
 #### 2.6 Canopy AI
 
@@ -237,8 +243,7 @@ Provides weather and environmental data used by the health surveillance and pred
 
 [Open Meteo](https://open-meteo.com/)
 
-
-#### 4.2  Gemini Files Search API
+#### 4.2 Gemini Files Search API
 
 Gemini File Search is the knowledge-retrieval and generation service for Canopy AI. Provides retrieval augmented generation over cleaned gorilla health reference documents. Cleaned gorilla health documents are uploaded into a configured File Search Store. The backend sends a question and the store reference to Gemini, receives a grounded answer and citation metadata, and converts that result into CANOPY’s response schema.
 
@@ -246,19 +251,19 @@ The Gemini API key, model name, and File Search Store identifier must remain bac
 
 [Gemini File search](https://ai.google.dev/gemini-api/docs/file-search)
 
-#### 4.3  Email provider(SMTP)
+#### 4.3 Email provider(SMTP)
 
 Email is used for login OTP and account-related communication. SMTP configuration is backend-only and should never be exposed to the frontend.
 
 [Simple Mail Transfer Protocol](https://www.smtp.com/email-api/?afid=partnerstack&utm_source=partner&gclid=CjwKCAjwi-zWBhAdEiwAqlRf-G3SBMqMIwsmRCCcsMYF0VMREavKwGN2WvKO57kvyjg2bt1aKFNNrxoCxLIQAvD_BwE&gbraid=0AAAAAphr3jv3qfiLUtvGqkLBzM8ccM70f&gad_campaignid=20083745898&gad_source=1&ps_partner_key=c2VtYW50aWNsYWJz&pscd=pstk.smtp.com&sid=1-g-CjwKCAjwi-zWBhAdEiwAqlRf-G3SBMqMIwsmRCCcsMYF0VMREavKwGN2WvKO57kvyjg2bt1aKFNNrxoCxLIQAvD_BwE&utm_medium=semanticlabs&utm_campaign=partnerstack&source=partner&gspk=c2VtYW50aWNsYWJz)
 
-#### 4.4  Redis
+#### 4.4 Redis
 
 Redis stores short-lived authentication states such as OTP information and rate-limiting or login-flow data. Redis is not the authoritative store for health records.
 
 [ Redis](https://redis.io/)
 
-#### 4.5  Mapping service
+#### 4.5 Mapping service
 
 The map component visualizes location grids, gorilla-related observations, and risk distributions. Because location data can be sensitive, the API must apply role-based restrictions before returning it.
 
@@ -311,7 +316,6 @@ A normal API request follows these steps:
 13. The proxy returns the backend response to the browser.
 14. The frontend updates its local page state
 
-
 ### Request
 
 <details>
@@ -348,7 +352,6 @@ A normal API request follows these steps:
 
 </details>
 
-
 ## AI Flow
 
 CANOPY contains multiple AI-assisted flows that must be kept conceptually separate.
@@ -367,7 +370,7 @@ Gemini retrieves relevant passages from File Search Store
 ↓
 Gemini generates grounded answer and source metadata
 ↓
-Backend validates and stores AI response
+Backend validates and returns the answer; the endpoint summary says it is not saved as a disease-prediction record. Persistence of response metadata or feedback remains unverified.
 ↓
 Frontend displays answer and sources
 
@@ -389,6 +392,6 @@ The AI cannot:
 
 #### AI feedback flow
 
-After an answer is displayed, the doctor may submit positive or negative feedback with an optional comment. Feedback is linked to the stored response_id, not to an arbitrary frontend message identifier.
+After an answer is displayed, the doctor may submit positive or negative feedback with an optional comment, linked by `response_id`. The available documentation does not establish whether this identifier refers to a persisted answer, metadata record, or feedback record. Confirm the exact storage contract against the backend schema and endpoint before documenting retention or privacy behavior.
 
 👉 [Read the full documentation here](ai.md)

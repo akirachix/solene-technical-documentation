@@ -1,4 +1,12 @@
+---
+title: Backend and Data Model
+description: Backend architecture, API, data model, security, tests, and operational notes.
+status: review
+---
+
 # Canopy Backend & Data Model Technical Documentation
+
+> **Evidence boundary:** The backend repository is not included in this workspace. Source paths, endpoint behavior, configuration, test results, and operational claims below are documented project evidence, not independently verified implementation facts.
 
 ## 1. Overview
 
@@ -737,7 +745,7 @@ def update(self, case_id: uuid.UUID, data: HealthCaseUpdate) -> HealthCaseRead:
 
 ## 11. Testing
 
-The backend has a pytest suite in `tests/`, one file per area (for example `test_user.py`, `test_gorilla.py`, `test_observations.py`, `test_notifications.py`, `test_gorilla_group.py`, `test_alembic_env.py`). The CI run on 26 October 2026 passed 783 tests, with 16 skipped and 2 expected failures, and 84% line coverage.
+The backend documentation describes a pytest suite in `tests/`, one file per area (for example `test_user.py`, `test_gorilla.py`, `test_observations.py`, `test_notifications.py`, `test_gorilla_group.py`, `test_alembic_env.py`). A documented CI snapshot on 26 October 2026 reports 783 passed, 16 skipped, 2 expected failures, and 84% line coverage. This historical result is not reproducible from this documentation-only repository.
 
 **How the tests work**
 
@@ -807,8 +815,8 @@ Two backend gaps should be closed before release: unauthenticated prediction and
 
 | ID          | Gap                                                                                                                   | Priority | Status                                                                                                                                     |
 | ----------- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| G-01        | `/disease-predictions/*` endpoints need no login                                                                      | Critical | Open                                                                                                                                       |
-| G-02        | `/api/v1/locations` (including POST) needs no login                                                                   | Critical | Open                                                                                                                                       |
+| G-01        | `/disease-predictions/*` endpoints need no login                                                                      | Critical | Open; release blocker until authorization is implemented and verified by tests                                                             |
+| G-02        | `/api/v1/locations` (including POST) needs no login                                                                   | Critical | Open; release blocker until access policy is confirmed, implemented, and verified by tests                                                 |
 | G-04        | No audit trail: reassignment, edits, close/reopen overwrite history                                                   | Critical | Partly fixed: `audit_logs` records updates and deletes (migration `b82f26b98e55`). Inserts are not logged and entries are not hash-chained |
 | G-05        | Clinical fields are single text columns; a new treatment erases the old one                                           | Critical | Open, needs decision                                                                                                                       |
 | G-07        | Trackers can hard-delete unlinked observations                                                                        | Critical | Open, needs decision                                                                                                                       |
@@ -819,7 +827,7 @@ Two backend gaps should be closed before release: unauthenticated prediction and
 | G-14        | Observation review is derived; a vet can't mark "reviewed, no case"                                                   | High     | Open, needs decision                                                                                                                       |
 | G-15 / G-16 | No dedicated reassign endpoint or assignment history; any doctor can edit any case                                    | High     | Partly: reassignment now notifies the new vet                                                                                              |
 | G-17        | A case can close while its follow-up tasks are open                                                                   | High     | Open, needs decision                                                                                                                       |
-| G-21        | No idempotency key; a retried observation upload creates duplicates                                                   | High     | Open. Blocks safe mobile offline sync, which plans a `client_ref` key                                                                      |
+| G-21        | No idempotency key; a retried observation upload creates duplicates                                                   | High     | Open; offline sync is not duplicate-safe until server-side idempotency is implemented and tested                                           |
 | G-25 / G-26 | Mixed route prefixes and list shapes (`Page` vs. bare array)                                                          | Medium   | Open                                                                                                                                       |
 | G-27        | Questionable transitions (`awaiting_result` to `reopened`; no `new` to `closed`)                                      | Medium   | Open, needs decision                                                                                                                       |
 | G-33        | Login lockout was in-process memory, lost on restart and not shared                                                   | Medium   | Resolved: lockouts moved to Redis (SOL-421)                                                                                                |

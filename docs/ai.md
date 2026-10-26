@@ -1,22 +1,21 @@
 ---
 title: AI Module
 description: CANOPY AI Technical Documentation
-status: verified
-evidence: []
+status: review
 ---
 
 # CANOPY AI Technical Documentation
 
-CANOPY's AI turns field observations, weather and a library of veterinary papers into disease-risk predictions and chatbot answers for gorilla vets, using Gemini with [File Search](https://ai.google.dev/gemini-api/docs/file-search), and accepts an answer only after the backend has checked it for grounding and safety. This document describes how every part works, as built in solene-backend and solene-frontend.
+The documented CANOPY AI design uses Gemini with [File Search](https://ai.google.dev/gemini-api/docs/file-search) to produce disease-risk predictions and chatbot answers for gorilla vets, using field observations, weather and veterinary references. The documented backend checks outputs for grounding and safety; these checks do not establish clinical accuracy. The application repositories are not present in this workspace, so implementation claims on this page are not independently verified.
 
 ## 1. Overview
 
-The AI has two features: risk predictions that are saved and reviewed by vets, and a chatbot that answers questions and saves nothing.
+The AI has two features: risk predictions that are saved and reviewed by vets, and a chatbot that returns answers without creating disease-prediction records. The backend endpoint summary says chatbot answers are not saved. Other documentation describes a `response_id` used by a feedback flow, and the backend migration history mentions AI response tables without listing their schema. Confirm whether response metadata or feedback is persisted; do not state that answer content is stored unless the backend schema and route confirm it.
 
 | Feature         | Who uses it                                       | Endpoint                      | Result                                                                                                                          |
 | --------------- | ------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | Risk prediction | Gorilla doctors, from Run AI assessment on a case | `POST /api/v1/ai/predictions` | Up to 5 (default 3) possible conditions with probability, risk score, interpretation and recommendations, saved to the database |
-| Chatbot         | Health readers, from the Canopy AI page           | `POST /api/v1/ai/ask`         | An answer, key evidence and next steps, returned only                                                                           |
+| Chatbot         | Health readers, from the Canopy AI page           | `POST /api/v1/ai/ask`         | An answer, key evidence and next steps; does not create a disease-prediction record                                             |
 
 End-to-end flow of a prediction:
 
@@ -1141,7 +1140,7 @@ Run them:
 uv run pytest tests/test_predictions_weather_ai.py tests/test_vet_feedback.py -v
 ```
 
-The full backend suite passed locally with 732 passed and 2 expected failures.
+The latest test result recorded in the project documentation is the Backend page's 26 October 2026 CI snapshot: 783 passed, 16 skipped, 2 expected failures, and 84% line coverage. An older AI-page note reported 732 passed and 2 expected failures but provided no commit, run date, or selection; it is superseded as a summary and is not comparable. Neither result is reproducible from this documentation-only repository.
 
 ### Known limitations
 

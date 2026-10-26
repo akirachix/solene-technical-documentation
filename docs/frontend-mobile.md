@@ -1,8 +1,7 @@
 ---
 title: Frontend Mobile
 description: CANOPY Tracker App (Flutter)
-status: verified
-evidence: []
+status: review
 ---
 
 # Frontend Mobile (Flutter): CANOPY Tracker App
@@ -38,21 +37,21 @@ The app is one Flutter codebase for Android and iOS. It uses `provider` for MVVM
 
 ### 2.1 Technology stack
 
-| Area | Technology | Used for |
-|---|---|---|
-| Framework | Flutter, Dart 3 | Android and iOS app from one codebase |
-| State management | `provider` with `ChangeNotifier` | View models that screens listen to |
-| Routing | `MaterialApp` named routes and `AuthGate` | Moving between screens; sending signed-out users to sign-in |
-| Networking | `http` (JSON and multipart) | Calls to the CANOPY REST API and photo upload |
-| Local database | `sqflite_sqlcipher` | Encrypted SQLite database for offline observations and gorilla lists |
-| Secure storage | `flutter_secure_storage` | Session token, user profile and the device encryption keys |
-| Photo protection | `cryptography`, `flutter_image_compress` | Encrypting photos (AES-256-GCM) and removing photo metadata |
-| Connectivity | `connectivity_plus` and a `/health` check | Online/offline status |
-| Location | `geolocator` | GPS position of an observation |
-| Media | `image_picker` | Taking or choosing a photo |
-| Notifications | `firebase_messaging` | Push notifications from the platform |
-| Crash reporting | `firebase_crashlytics` | Crash reports from the field |
-| Testing | `flutter_test`, `sqflite_common_ffi` | Unit tests with fakes and an in-memory database |
+| Area             | Technology                                | Used for                                                             |
+| ---------------- | ----------------------------------------- | -------------------------------------------------------------------- |
+| Framework        | Flutter, Dart 3                           | Android and iOS app from one codebase                                |
+| State management | `provider` with `ChangeNotifier`          | View models that screens listen to                                   |
+| Routing          | `MaterialApp` named routes and `AuthGate` | Moving between screens; sending signed-out users to sign-in          |
+| Networking       | `http` (JSON and multipart)               | Calls to the CANOPY REST API and photo upload                        |
+| Local database   | `sqflite_sqlcipher`                       | Encrypted SQLite database for offline observations and gorilla lists |
+| Secure storage   | `flutter_secure_storage`                  | Session token, user profile and the device encryption keys           |
+| Photo protection | `cryptography`, `flutter_image_compress`  | Encrypting photos (AES-256-GCM) and removing photo metadata          |
+| Connectivity     | `connectivity_plus` and a `/health` check | Online/offline status                                                |
+| Location         | `geolocator`                              | GPS position of an observation                                       |
+| Media            | `image_picker`                            | Taking or choosing a photo                                           |
+| Notifications    | `firebase_messaging`                      | Push notifications from the platform                                 |
+| Crash reporting  | `firebase_crashlytics`                    | Crash reports from the field                                         |
+| Testing          | `flutter_test`, `sqflite_common_ffi`      | Unit tests with fakes and an in-memory database                      |
 
 ### 2.2 Project structure
 
@@ -83,14 +82,14 @@ canopy/
 
 ### 2.3 Layers
 
-| Layer | Folder | Responsibility | Example |
-|---|---|---|---|
-| View | `screens/`, `widgets/` | Draw state and pass taps to the view model | `RecordObservationScreen` |
-| View model | `providers/` | Screen state and rules, exposed through `ChangeNotifier` | `RecordObservationViewModel`, `SyncViewModel` |
-| Repository | `repositories/` | Own the app data and decide where it comes from (API or phone) | `ObservationRepository`, `ReferenceDataRepository`, `SessionRepository` |
-| DAO | `database/` | Read and write one database table | `SqliteObservationDao`, `SqliteGorillaDao` |
-| Service | `services/`, `security/` | One job each: an API endpoint, GPS, connectivity, keys, photos | `ObservationService`, `FilePhotoStore` |
-| Model | `models/` | Plain data classes with `fromJson`/`toJson` or `fromRow`/`toRow` | `LocalObservation`, `Gorilla` |
+| Layer      | Folder                   | Responsibility                                                   | Example                                                                 |
+| ---------- | ------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| View       | `screens/`, `widgets/`   | Draw state and pass taps to the view model                       | `RecordObservationScreen`                                               |
+| View model | `providers/`             | Screen state and rules, exposed through `ChangeNotifier`         | `RecordObservationViewModel`, `SyncViewModel`                           |
+| Repository | `repositories/`          | Own the app data and decide where it comes from (API or phone)   | `ObservationRepository`, `ReferenceDataRepository`, `SessionRepository` |
+| DAO        | `database/`              | Read and write one database table                                | `SqliteObservationDao`, `SqliteGorillaDao`                              |
+| Service    | `services/`, `security/` | One job each: an API endpoint, GPS, connectivity, keys, photos   | `ObservationService`, `FilePhotoStore`                                  |
+| Model      | `models/`                | Plain data classes with `fromJson`/`toJson` or `fromRow`/`toRow` | `LocalObservation`, `Gorilla`                                           |
 
 Dependencies only point **downwards**. A screen never calls a service or the database directly, and services know nothing about the UI.
 
@@ -134,6 +133,7 @@ Future<void> main() async {
 ```
 
 **How it works:**
+
 1. The app refuses to start if the server address is not HTTPS.
 2. Firebase and crash reporting start first, so any crash after that is reported.
 3. The database key comes from the phone's secure storage, and the database is opened with it.
@@ -184,6 +184,7 @@ recordObservation: (context) {
 ### 3.3 API client (`ApiClient`)
 
 `ApiClient` is one wrapper around `http.Client`. It handles:
+
 - the base URL;
 - JSON headers;
 - the bearer token;
@@ -208,6 +209,7 @@ flutter run --dart-define=API_URL=https://your-backend-url
 ### 3.4 Authentication and session (`AuthService`, `SessionRepository`)
 
 Sign-in has two steps:
+
 1. `POST /auth/login` with email, password and `app: mobile`.
 2. `POST /auth/verify-otp` with the 6-digit code, then `GET /users/me` for the profile.
 
@@ -240,6 +242,7 @@ When the phone is offline, the latitude and longitude are saved with the observa
 ### 3.7 Record observation view model
 
 `RecordObservationViewModel` drives the four steps (who, signs, evidence, review). It:
+
 - checks each step;
 - maps each sign to a backend category such as respiratory or gastrointestinal;
 - requires a severity for every sign marked present;
@@ -260,31 +263,31 @@ A tracker can record observations with no signal at all. They are saved in an en
 
 ### 4.1 Components
 
-| File | Layer | Job |
-|---|---|---|
-| `database/local_database.dart` | Database | Opens the encrypted database and creates the tables |
-| `database/observation_dao.dart` | DAO | Reads and writes observations and their signs |
-| `database/gorilla_dao.dart` | DAO | Stores the gorilla list for offline use |
-| `database/sync_state_dao.dart` | DAO | Small settings such as "last sync time" |
-| `models/local_observation.dart` | Model | One observation saved on the phone, with its sync status |
-| `repositories/observation_repository.dart` | Repository | Saves observations and sends them during sync |
-| `repositories/reference_data_repository.dart` | Repository | Downloads and serves the gorilla list |
-| `services/network_status.dart` | Service | Says whether the CANOPY server is reachable |
-| `providers/sync_viewmodel.dart` | View model | Starts sync at the right moments and shows the counts |
-| `widgets/connection_dot.dart` | View | Green or red dot on the Home screen |
-| `widgets/offline_status_dialog.dart` | View | The offline card and the listener that shows it |
-| `widgets/observations/sync_status_label.dart` | View | Green **Synced** or red **Unsynced** pill |
+| File                                          | Layer      | Job                                                      |
+| --------------------------------------------- | ---------- | -------------------------------------------------------- |
+| `database/local_database.dart`                | Database   | Opens the encrypted database and creates the tables      |
+| `database/observation_dao.dart`               | DAO        | Reads and writes observations and their signs            |
+| `database/gorilla_dao.dart`                   | DAO        | Stores the gorilla list for offline use                  |
+| `database/sync_state_dao.dart`                | DAO        | Small settings such as "last sync time"                  |
+| `models/local_observation.dart`               | Model      | One observation saved on the phone, with its sync status |
+| `repositories/observation_repository.dart`    | Repository | Saves observations and sends them during sync            |
+| `repositories/reference_data_repository.dart` | Repository | Downloads and serves the gorilla list                    |
+| `services/network_status.dart`                | Service    | Says whether the CANOPY server is reachable              |
+| `providers/sync_viewmodel.dart`               | View model | Starts sync at the right moments and shows the counts    |
+| `widgets/connection_dot.dart`                 | View       | Green or red dot on the Home screen                      |
+| `widgets/offline_status_dialog.dart`          | View       | The offline card and the listener that shows it          |
+| `widgets/observations/sync_status_label.dart` | View       | Green **Synced** or red **Unsynced** pill                |
 
 ### 4.2 The local database
 
 The database file is `canopy_secure.db`, stored in the app's private folder and encrypted with SQLCipher. It has four tables:
 
-| Table | What it stores |
-|---|---|
-| `observations` | One row per observation: who, where, notes, photo, the time observed, and its sync status |
+| Table               | What it stores                                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `observations`      | One row per observation: who, where, notes, photo, the time observed, and its sync status                        |
 | `observation_signs` | The signs for each observation (category, name, severity). Deleted automatically when the observation is deleted |
-| `gorillas` | The gorilla list downloaded from the server, for offline use |
-| `sync_state` | Small key/value settings, for example `last_sync_at` |
+| `gorillas`          | The gorilla list downloaded from the server, for offline use                                                     |
+| `sync_state`        | Small key/value settings, for example `last_sync_at`                                                             |
 
 The database checks its own data. Values such as `status` and `severity` can only be one of the allowed words:
 
@@ -320,6 +323,7 @@ CREATE TABLE observation_signs (
 ```
 
 **How the types are stored:**
+
 - IDs (UUIDs) are stored as `TEXT`.
 - Fixed lists of values (enums) are stored as `TEXT` with a `CHECK`.
 - A gorilla's sex is stored as `INTEGER`: `1` for male, `0` for female.
@@ -328,11 +332,11 @@ CREATE TABLE observation_signs (
 
 Every observation has one status:
 
-| Status | Meaning |
-|---|---|
-| `pending` | Saved on the phone, waiting to be sent |
-| `syncing` | Being sent right now |
-| `synced` | The server has it |
+| Status            | Meaning                                                             |
+| ----------------- | ------------------------------------------------------------------- |
+| `pending`         | Saved on the phone, waiting to be sent                              |
+| `syncing`         | Being sent right now                                                |
+| `synced`          | The server has it                                                   |
 | `needs_attention` | The server rejected it, and the tracker must check it and try again |
 
 `needs_attention` exists so a rejected observation is **not lost**, and so the phone does not keep sending the same bad data forever.
@@ -366,6 +370,7 @@ Future<bool> _check() async {
 ```
 
 **How it works:**
+
 - The app counts as online only if `/health` answers within 8 seconds with a status below 500.
 - While offline, it checks again every 15 seconds.
 - It also checks again whenever the phone's network changes.
@@ -426,16 +431,18 @@ for (final original in queue) {
 }
 ```
 
-| Server answer | What the app does |
-|---|---|
-| Success (2xx) | Mark `synced`, delete the photo from the phone, continue |
-| 409 (already received) | Treat as `synced`, so no duplicate is created |
-| 5xx, 408, 429, or no network | Put back to `pending` and stop; try again later |
-| "Session expired" (401) | Put back to `pending` and stop until the tracker signs in again |
-| Other 4xx (data rejected) | Mark `needs_attention` with the server's reason, continue with the next one |
-| No location saved | Mark `needs_attention`, continue |
+| Server answer                | What the app does                                                           |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Success (2xx)                | Mark `synced`, delete the photo from the phone, continue                    |
+| 409 (already received)       | Treat as `synced` only if the backend identifies the request as a duplicate |
+| 5xx, 408, 429, or no network | Put back to `pending` and stop; try again later                             |
+| "Session expired" (401)      | Put back to `pending` and stop until the tracker signs in again             |
+| Other 4xx (data rejected)    | Mark `needs_attention` with the server's reason, continue with the next one |
+| No location saved            | Mark `needs_attention`, continue                                            |
 
 The last sync time is saved only when a run finishes without being interrupted.
+
+**Duplicate-delivery limitation:** the backend gap register says observation uploads do not yet have an idempotency key and a retried request can create a duplicate. The client-side `clientRef` alone does not guarantee deduplication unless the backend enforces it. Do not treat the 409 handling branch as proof that retries are currently duplicate-safe.
 
 ### 4.7 When sync runs
 
@@ -462,18 +469,18 @@ Each observation stores the tracker's `owner_id`. If a different tracker signs i
 
 The app follows the **OWASP Mobile Top 10 (2024)**.
 
-| OWASP risk | What the app does | Where |
-|---|---|---|
-| M1 Credential usage | Token kept in secure storage; no token printed to the logs | `SessionStore`, `PushNotificationService` |
-| M2 Supply chain | Dependabot updates packages weekly; OSV-Scanner checks `pubspec.lock` | `.github/dependabot.yml`, `.github/workflows/dependency-scan.yml` |
-| M3 Authentication / authorisation | Email + password + 6-digit code; only trackers allowed; 401 signs the user out | `AuthService`, `SessionRepository`, `ApiClient` |
-| M4 Input validation | Required fields checked; notes limited to 500 characters; photos re-encoded | `RecordObservationViewModel`, `FilePhotoStore` |
-| M5 Insecure communication | App refuses non-HTTPS server; cleartext traffic blocked on Android | `TransportSecurity`, `AndroidManifest.xml` |
-| M6 Privacy | Photo metadata (EXIF, including GPS) removed; GPS deleted after the grid is found; no sensitive data in logs or crash reports | `FilePhotoStore`, `ObservationRepository` |
-| M7 Binary protection | Release builds obfuscated with `--obfuscate --split-debug-info` | Release build command |
-| M8 Security misconfiguration | Android backup and device transfer turned off | `AndroidManifest.xml`, `data_extraction_rules.xml` |
-| M9 Insecure data storage | Database encrypted with SQLCipher; photos encrypted with AES-256-GCM | `LocalDatabase`, `FilePhotoStore` |
-| M10 Insufficient cryptography | Only standard, well-tested algorithms; random 256-bit keys | `DeviceKeyStore` |
+| OWASP risk                        | What the app does                                                                                                             | Where                                                             |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| M1 Credential usage               | Token kept in secure storage; no token printed to the logs                                                                    | `SessionStore`, `PushNotificationService`                         |
+| M2 Supply chain                   | Dependabot updates packages weekly; OSV-Scanner checks `pubspec.lock`                                                         | `.github/dependabot.yml`, `.github/workflows/dependency-scan.yml` |
+| M3 Authentication / authorisation | Email + password + 6-digit code; only trackers allowed; 401 signs the user out                                                | `AuthService`, `SessionRepository`, `ApiClient`                   |
+| M4 Input validation               | Required fields checked; notes limited to 500 characters; photos re-encoded                                                   | `RecordObservationViewModel`, `FilePhotoStore`                    |
+| M5 Insecure communication         | App refuses non-HTTPS server; cleartext traffic blocked on Android                                                            | `TransportSecurity`, `AndroidManifest.xml`                        |
+| M6 Privacy                        | Photo metadata (EXIF, including GPS) removed; GPS deleted after the grid is found; no sensitive data in logs or crash reports | `FilePhotoStore`, `ObservationRepository`                         |
+| M7 Binary protection              | Release builds obfuscated with `--obfuscate --split-debug-info`                                                               | Release build command                                             |
+| M8 Security misconfiguration      | Android backup and device transfer turned off                                                                                 | `AndroidManifest.xml`, `data_extraction_rules.xml`                |
+| M9 Insecure data storage          | Database encrypted with SQLCipher; photos encrypted with AES-256-GCM                                                          | `LocalDatabase`, `FilePhotoStore`                                 |
+| M10 Insufficient cryptography     | Only standard, well-tested algorithms; random 256-bit keys                                                                    | `DeviceKeyStore`                                                  |
 
 ### 5.1 Device keys
 
@@ -533,12 +540,12 @@ On Android, `android:usesCleartextTraffic="false"` blocks any plain `http://` ca
 
 ### 5.4 Other checks
 
-| Area | How it is handled |
-|---|---|
-| Token expiry | A timer signs the user out when the token expires; an expired token is never sent |
-| Photo checks | JPG, PNG or HEIC only, under 10 MB on the phone |
+| Area           | How it is handled                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| Token expiry   | A timer signs the user out when the token expires; an expired token is never sent                |
+| Photo checks   | JPG, PNG or HEIC only, under 10 MB on the phone                                                  |
 | No silent loss | An observation is never deleted until the server has it; rejected ones stay as `needs_attention` |
-| Crash reports | Crashlytics records only errors and stack traces; no gorilla IDs, locations or tokens |
+| Crash reports  | Crashlytics records only errors and stack traces; no gorilla IDs, locations or tokens            |
 
 The server also checks the photo's file type itself and limits uploads to 5 MB. A photo between 5 and 10 MB passes the phone check but is rejected by the server, and it shows as **Need attention**.
 
@@ -559,19 +566,19 @@ After sign-in, the tracker lands in a four-tab shell. Recording an observation o
 
 `MainShell` uses an `IndexedStack` with a Material 3 `NavigationBar`, so each tab keeps its scroll position and state when the tracker switches.
 
-| Tab | Screen | What it shows |
-|---|---|---|
-| Home | `HomeScreen` | Greeting, connection dot, **New observation**, and a shortcut to follow-ups |
-| Observations | `ObservationsScreen` | Past observations with **Synced** / **Unsynced** labels |
-| Follow-ups | `FollowUpsScreen` | Tasks assigned by veterinarians |
-| Settings | `SettingsScreen` | Account and sign-out |
+| Tab          | Screen               | What it shows                                                               |
+| ------------ | -------------------- | --------------------------------------------------------------------------- |
+| Home         | `HomeScreen`         | Greeting, connection dot, **New observation**, and a shortcut to follow-ups |
+| Observations | `ObservationsScreen` | Past observations with **Synced** / **Unsynced** labels                     |
+| Follow-ups   | `FollowUpsScreen`    | Tasks assigned by veterinarians                                             |
+| Settings     | `SettingsScreen`     | Account and sign-out                                                        |
 
 The Home screen (screen 6 in the banner above) shows today's work (follow-ups and tasks due), a large **New Observation** button, and the next active follow-up task.
 
 Settings shows the tracker's profile, notifications, and the terms and privacy policy:
 
-| Settings | My Profile |
-|---|---|
+| Settings                                  | My Profile                                 |
+| ----------------------------------------- | ------------------------------------------ |
 | ![Settings](./images/mobile/settings.png) | ![My Profile](./images/mobile/profile.png) |
 
 ### 6.3 Recording an observation
@@ -594,12 +601,14 @@ After saving, a success view appears. When saved offline, the message reads: "Sa
 `OfflineNoticeListener` wraps the shell and opens the offline card automatically when the connection drops.
 
 The card shows:
+
 - the last successful sync;
 - pending observations;
 - observations that need attention;
 - assigned groups available offline.
 
 Its buttons are:
+
 - **Continue to Today:** closes the card and goes to Home.
 - **Check connection again.**
 - **Try sending again:** shown only when items need attention.
@@ -631,26 +640,26 @@ The tests run without a phone, a network or the real server. Every service sits 
 
 `test/fakes/fake_offline.dart` provides:
 
-| Fake / helper | Replaces | Lets a test |
-|---|---|---|
-| `openTestDatabase()` | The encrypted database | Use a fresh in-memory SQLite database |
-| `MemoryPhotoStore` | `FilePhotoStore` | Keep photos in memory and check they were opened and closed |
-| `FakeNetworkStatus` | `ConnectivityNetworkStatus` | Switch online and offline on demand |
-| `FakeGridService` | `GridService` | Return a fixed grid or fail |
-| `RecordingObservationService` | `ObservationService` | Record what was sent, or throw a chosen error |
+| Fake / helper                 | Replaces                    | Lets a test                                                 |
+| ----------------------------- | --------------------------- | ----------------------------------------------------------- |
+| `openTestDatabase()`          | The encrypted database      | Use a fresh in-memory SQLite database                       |
+| `MemoryPhotoStore`            | `FilePhotoStore`            | Keep photos in memory and check they were opened and closed |
+| `FakeNetworkStatus`           | `ConnectivityNetworkStatus` | Switch online and offline on demand                         |
+| `FakeGridService`             | `GridService`               | Return a fixed grid or fail                                 |
+| `RecordingObservationService` | `ObservationService`        | Record what was sent, or throw a chosen error               |
 
 `test/fakes/fake_auth.dart` provides the matching fakes for sign-in and session storage.
 
 ### 7.2 Main test files
 
-| File | Covers |
-|---|---|
-| `test/services/local_database_test.dart` | Tables are created; `CHECK` rules reject wrong values; signs are deleted with their observation |
-| `test/repositories/observation_repository_test.dart` | Oldest first, 409 treated as sent, 5xx/429 stop, 4xx needs attention, session expiry, owner separation, GPS removed after grid lookup, temporary photo always deleted |
-| `test/repositories/reference_data_repository_test.dart` | Gorilla list saved and read offline |
-| `test/providers/sync_viewmodel_test.dart` | Sync on start, on reconnect and on sign-in; offline notice; one sync at a time |
-| `test/providers/record_observation_offline_test.dart` | Saved on the phone offline and online; saved gorilla list; error messages |
-| `test/security/transport_security_test.dart` | Only `https://` addresses are accepted |
+| File                                                    | Covers                                                                                                                                                                |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test/services/local_database_test.dart`                | Tables are created; `CHECK` rules reject wrong values; signs are deleted with their observation                                                                       |
+| `test/repositories/observation_repository_test.dart`    | Oldest first, 409 treated as sent, 5xx/429 stop, 4xx needs attention, session expiry, owner separation, GPS removed after grid lookup, temporary photo always deleted |
+| `test/repositories/reference_data_repository_test.dart` | Gorilla list saved and read offline                                                                                                                                   |
+| `test/providers/sync_viewmodel_test.dart`               | Sync on start, on reconnect and on sign-in; offline notice; one sync at a time                                                                                        |
+| `test/providers/record_observation_offline_test.dart`   | Saved on the phone offline and online; saved gorilla list; error messages                                                                                             |
+| `test/security/transport_security_test.dart`            | Only `https://` addresses are accepted                                                                                                                                |
 
 ### 7.3 Running the checks
 
@@ -663,6 +672,7 @@ flutter test
 Before a pull request, `flutter analyze` must report **No issues found!** and all tests must pass.
 
 Offline behaviour is checked on a real phone:
+
 1. Turn on airplane mode and record an observation.
 2. Check that it shows a red **Unsynced** label.
 3. Turn airplane mode off.
@@ -674,22 +684,22 @@ You need the Flutter SDK, Git, and an Android phone or emulator. iPhone builds n
 
 ### 8.1 Prerequisites
 
-| Tool | Needed for |
-|---|---|
-| Flutter SDK (stable, Dart 3) | Building and running the app |
-| Android Studio or the Android SDK, Java 17 | Android builds, emulator and USB debugging |
-| Xcode on macOS | iOS builds |
-| Git and GitHub CLI (`gh`) | Cloning, branches and pull requests |
-| Firebase config files | `google-services.json` (Android) and `GoogleService-Info.plist` (iOS), from a maintainer |
+| Tool                                       | Needed for                                                                               |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Flutter SDK (stable, Dart 3)               | Building and running the app                                                             |
+| Android Studio or the Android SDK, Java 17 | Android builds, emulator and USB debugging                                               |
+| Xcode on macOS                             | iOS builds                                                                               |
+| Git and GitHub CLI (`gh`)                  | Cloning, branches and pull requests                                                      |
+| Firebase config files                      | `google-services.json` (Android) and `GoogleService-Info.plist` (iOS), from a maintainer |
 
 Check the setup with `flutter doctor`.
 
 ### 8.2 Platform permissions
 
-| Platform | File | Declared |
-|---|---|---|
-| Android | `android/app/src/main/AndroidManifest.xml` | Internet, location, camera, notifications; `allowBackup="false"`; `usesCleartextTraffic="false"` |
-| iOS | `ios/Runner/Info.plist` | `NSLocationWhenInUseUsageDescription`, `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription` |
+| Platform | File                                       | Declared                                                                                            |
+| -------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| Android  | `android/app/src/main/AndroidManifest.xml` | Internet, location, camera, notifications; `allowBackup="false"`; `usesCleartextTraffic="false"`    |
+| iOS      | `ios/Runner/Info.plist`                    | `NSLocationWhenInUseUsageDescription`, `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription` |
 
 ### 8.3 Building a release
 
@@ -704,19 +714,19 @@ The release is signed with the upload key from `android/key.properties`, which i
 
 ## 9. Troubleshooting
 
-| Problem | Likely cause | Fix |
-|---|---|---|
-| "We couldn't reach CANOPY" on sign-in | No network, or the server is asleep or down | Check the connection; open `<API_URL>/health` in a browser; wait and retry |
-| "CANOPY took too long to answer" | Slow network or the server waking up (45 s timeout) | Retry; the first call after the server sleeps is slower |
-| "This app is for gorilla trackers" | The account role is not tracker | Use a tracker account; vets and admins use the web portal |
-| Code says expired | The 6-digit code passed its lifetime (default 5 minutes) | Tap **Send a new code** |
-| "Could not get a GPS position" | GPS off, no permission, or no fix within 20 s under tree cover | Turn on location, allow permission, move to open sky and retry |
-| Dot stays red with signal | `/health` does not answer within 8 s, or returns 5xx | Tap the dot, then **Check connection again**; check the server |
-| Observations stay **Unsynced** | Session expired, so sync is paused | Sign in again; sync starts by itself |
-| Items under **Need attention** | The server rejected the data (for example, a photo over 5 MB) or no location was saved | Read the reason, then **Try sending again**; a rejected photo needs a smaller one |
-| No gorillas to choose offline | The gorilla list was never loaded online on this phone | Open **Record observation** once while online |
-| App closes on start with "must start with https://" | `API_URL` was set to an `http://` address | Use an `https://` address |
-| `flutter analyze` errors after pulling | Old packages or a partial paste | `flutter clean`, `flutter pub get`, and compare the file with the branch |
+| Problem                                             | Likely cause                                                                           | Fix                                                                               |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| "We couldn't reach CANOPY" on sign-in               | No network, or the server is asleep or down                                            | Check the connection; open `<API_URL>/health` in a browser; wait and retry        |
+| "CANOPY took too long to answer"                    | Slow network or the server waking up (45 s timeout)                                    | Retry; the first call after the server sleeps is slower                           |
+| "This app is for gorilla trackers"                  | The account role is not tracker                                                        | Use a tracker account; vets and admins use the web portal                         |
+| Code says expired                                   | The 6-digit code passed its lifetime (default 5 minutes)                               | Tap **Send a new code**                                                           |
+| "Could not get a GPS position"                      | GPS off, no permission, or no fix within 20 s under tree cover                         | Turn on location, allow permission, move to open sky and retry                    |
+| Dot stays red with signal                           | `/health` does not answer within 8 s, or returns 5xx                                   | Tap the dot, then **Check connection again**; check the server                    |
+| Observations stay **Unsynced**                      | Session expired, so sync is paused                                                     | Sign in again; sync starts by itself                                              |
+| Items under **Need attention**                      | The server rejected the data (for example, a photo over 5 MB) or no location was saved | Read the reason, then **Try sending again**; a rejected photo needs a smaller one |
+| No gorillas to choose offline                       | The gorilla list was never loaded online on this phone                                 | Open **Record observation** once while online                                     |
+| App closes on start with "must start with https://" | `API_URL` was set to an `http://` address                                              | Use an `https://` address                                                         |
+| `flutter analyze` errors after pulling              | Old packages or a partial paste                                                        | `flutter clean`, `flutter pub get`, and compare the file with the branch          |
 
 ## 10. Conclusion
 

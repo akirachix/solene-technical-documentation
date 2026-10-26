@@ -1,7 +1,7 @@
 ---
 title: Overview
 description: What Canopy is, the problem it solves, how the research shaped it, and what it does, explained for readers new to mountain gorilla conservation.
-status: Verified
+status: review
 ---
 
 # Overview
@@ -12,7 +12,7 @@ Every day, field staff called **trackers** walk into the forest to watch gorilla
 
 The people doing this work already collect a huge amount of information. The trouble is that it lives in many different places: paper notebooks, radio calls, WhatsApp messages, medical files and research databases. When a vet needs to make a decision, they have to piece the story together by hand, and things can be missed or delayed.
 
-**Canopy brings all of that information together around one gorilla's health concern**, from the moment a tracker first notices something until the vet records how it ended. It helps the team spot worrying patterns earlier and makes sure nothing falls through the cracks. It does **not** diagnose or treat animals. The vet always makes the decision.
+**Canopy is intended to bring information together around a gorilla health concern**, from a field observation through veterinary review and follow-up. Its documented capabilities include observations, health cases, follow-up tasks, environmental context, and AI-assisted risk assessments. Known gaps and unverified automation are called out on this page. Canopy does **not** diagnose or treat animals; the vet makes the clinical decision.
 
 ## How to read this page
 
@@ -33,6 +33,8 @@ This page explains Canopy from the beginning, in the order the product was desig
 If a word is unfamiliar, check the [glossary](#glossary) at the end. For the full detail behind this page, see the [source documents](#source-documents).
 
 ## Why mountain gorillas need help
+
+**Evidence note:** Research statistics and interview findings on this page are reported by the external research report linked under [Source documents](#source-documents); that report is not included in this workspace and the claims have not been independently checked here. Treat them as source-reported, not independently verified. Personas are design artifacts, not assertions that the named profiles identify actual users. Product requirements, proposed thresholds, and implementation descriptions are distinguished where possible; implementation claims remain unverified without the application repositories.
 
 ### A small population that is still at risk
 
@@ -216,7 +218,7 @@ Some organisations don't use Canopy every day but decide whether and how it is u
 | Vet     | I open a respiratory case                | see whether other gorillas have similar signs, whether people were nearby in the last 7–14 days, and past illnesses | I can tell one sick gorilla from the start of an outbreak    |
 | Vet     | I review a case                          | see where every fact came from and how certain it is                                                                | I can trust the evidence and see what is missing             |
 | Vet     | I review a case                          | see weather and habitat conditions for that place and time                                                          | I can consider them without assuming they caused the illness |
-| Vet     | I make a decision                        | record why, and assign follow-up in the same step                                                                   | the decision stays linked to what happens next               |
+| Vet     | I make a decision                        | record why, then create a follow-up task for an open case                                                           | the decision and task can be managed in the case workflow    |
 | Anyone  | I open a case                            | see only what my role allows                                                                                        | sensitive data is protected without slowing my work          |
 
 ## Why existing tools are not enough
@@ -243,24 +245,24 @@ That is exactly where Canopy sits. It doesn't replace any of these systems; it c
 
 ### The health case
 
-The core idea in Canopy is the **health case**: a single record that follows one health concern for one gorilla from start to finish. It begins when an observation (or a pattern of observations) needs a vet's attention, and stays open until the vet records how it ended. Everything related to that concern is attached to it: the original observation, later observations, the gorilla's history, its group, lab requests and results, vet decisions, follow-up tasks and the final outcome.
+The product concept for Canopy is the **health case**: a record intended to follow one health concern for one gorilla through veterinary review and outcome. In the documented backend API, a gorilla doctor opens a case and can explicitly link observations. The available backend documentation does not establish automatic case creation, lab-request records, or automatic linking of follow-up outcomes to observations; treat those as requirements or future workflow until verified.
 
 ### A health concern, step by step
 
 1. **A tracker records an observation.** In the forest, the tracker opens the Canopy app, picks the gorilla and records what they saw: the sign, how severe it looks, and whether anything couldn't be assessed. This works with no signal at all; the observation is saved on the phone.
 2. **The observation reaches the system.** As soon as the phone has signal again, the observation is sent automatically. The tracker can see that it was sent.
-3. **Canopy decides whether a vet needs to see it.** Clear, written rules check things such as how severe the sign is, whether it has been seen before, and whether other gorillas in the group have similar signs. If a vet needs to look, Canopy creates a new health case or adds the observation to an open one. Trackers can also escalate a concern manually at any time.
+3. **A veterinarian reviews and organizes the concern.** The backend documentation describes case creation as a veterinarian-authorized action; it does not establish automatic case creation from observation thresholds. A veterinarian can open a case and link relevant observations. Any automatic escalation or case-creation rules should be treated as proposed until verified against the implementation.
 4. **Canopy gathers the background.** It pulls together the gorilla's recent observations and history, past cases, what is happening in its group, and the weather and conditions where it was seen, keeping a note of where each piece came from.
 5. **The vet reviews the case.** The vet opens a one-screen case summary showing the current concern, how it has developed, the background, what is missing, and an AI risk assessment explaining which conditions the evidence is consistent with and why. The vet decides what to do.
-6. **The decision becomes action.** The vet records the decision and the reason for it, and in the same step assigns a follow-up, such as "Re-check this gorilla's breathing at tomorrow's visit", to a named tracker with a due date.
-7. **The tracker follows up.** The task appears in the tracker's app. Their new observation is automatically linked to the same case. If a task becomes overdue, Canopy flags it.
+6. **The decision can lead to a follow-up task.** The vet records the decision and can create a separate task for a named tracker with a due date. The backend reference describes these as separate operations, not one atomic step.
+7. **The tracker follows up.** The task appears in the tracker's app. The backend gap register says submitted task outcomes are not automatically linked to a new observation or case, so that relationship must not be assumed. Reminder and overdue behavior depends on the configured notification job.
 8. **The case is closed.** When the vet is satisfied, they record the outcome and close the case. If the problem returns, the case can be reopened. The complete history stays available for the future.
 
 ### An example: before and after Canopy
 
 **Before Canopy.** On Monday, a tracker sees a young gorilla coughing. There's no signal, so she writes it in her notebook and radios it in that evening. Unsure the message got through, she also sends a WhatsApp message. On Tuesday, a colleague in another part of the forest sees a cough in a different gorilla from the same group, and mentions it at the team meeting on Thursday. The vet, meanwhile, has to dig through paper files to find that the first gorilla had a respiratory infection last year. She asks for a re-check by phone. Nobody records whether it happened, and the case ends without a written outcome.
 
-**With Canopy.** On Monday, the tracker records the cough in the app, offline. It syncs as she walks back into signal, and she sees it was delivered. On Tuesday, her colleague records the second cough. Canopy links both observations to the same group and adds them to one health case. The vet opens the case and immediately sees both observations, the first gorilla's previous respiratory infection, the recent heavy rain in that part of the forest, and an AI assessment listing the conditions the evidence is consistent with, with its sources. She decides to monitor closely and assigns a re-check to the tracker for the next morning. The tracker sees the task, completes it, and the result is added to the case. When both gorillas recover, the vet closes the case with a recorded outcome. The tracker can see how her report helped.
+**With Canopy (intended workflow).** On Monday, the tracker records the cough in the app, offline. When connected, the app attempts to sync it. The backend documentation identifies an open idempotency gap, so successful delivery should be confirmed rather than inferred from retry behavior. A veterinarian reviews observations and can open a case and link relevant records. The vet may create a follow-up task separately. Current documentation does not establish that task results automatically become observations or that all observations are automatically grouped into a case; those steps require confirmation in the deployed system.
 
 ### The principles behind Canopy
 
@@ -290,37 +292,39 @@ We also considered sensors such as camera traps, acoustic monitors and collars, 
 
 Every feature in Canopy exists because of a specific problem found in the research.
 
-| Problem                                    | Feature                                | What it does                                                                                                                                                                                                                                   | Learn more                     |
-| ------------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Reports lost where there is no signal      | **Offline-first app**                  | Trackers record observations with no signal; they are saved on the phone and sent automatically when signal returns. The app works the same online and offline                                                                                 | [Mobile App](/frontend-mobile) |
-| Missing information mistaken for "normal"  | **Uncertainty states**                 | Trackers can record "not seen", "not observed" or "unable to assess". These stay on the record and are shown to the vet                                                                                                                        | [Mobile App](/frontend-mobile) |
-| The same report sent through many channels | **Report status**                      | Each report shows whether it is waiting to send, sent, seen or acknowledged                                                                                                                                                                    | [Mobile App](/frontend-mobile) |
-| Cases that never formally end              | **Health cases**                       | Every concern becomes one case with a clear status, from new to closed or reopened, linking everything that happened                                                                                                                           | [Backend](/backend)            |
-| History that is hard to find               | **Case summary and health timeline**   | One screen with the concern, history, group context and open actions, plus a timeline of every event for each gorilla                                                                                                                          | [Web App](/frontend-web)       |
-| Patterns that nobody sees                  | **Group cluster alert**                | If 3 or more gorillas in the same group show similar signs within 14 days, Canopy raises a flag and shows the observations behind it                                                                                                           | [Backend](/backend)            |
-| Patterns that nobody sees                  | **Weather and environment**            | Weather for the place and time of each observation is attached and compared with normal conditions. It is shown as context, never as a cause                                                                                                   | [AI Module](/ai)               |
-| Deciding what comes first                  | **AI risk assessment**                 | An AI assistant, grounded in a library of veterinary research papers, suggests which conditions the evidence is consistent with, how likely they are and why, with sources. Every answer is checked for accuracy and safety before it is saved | [AI Module](/ai)               |
-| Deciding what comes first                  | **Risk map**                           | A satellite map showing gorilla groups, open cases and areas of higher risk                                                                                                                                                                    | [Web App](/frontend-web)       |
-| Decisions disconnected from action         | **Decision and follow-up in one step** | When the vet records a decision, the follow-up task is created at the same time, with a named person and due date                                                                                                                              | [Backend](/backend)            |
-| Follow-up that is invisible                | **Follow-up tracking**                 | Every task has an owner, a due date and a result. Overdue tasks are flagged                                                                                                                                                                    | [Backend](/backend)            |
-| Trackers never hear what happened          | **Feedback to trackers**               | Trackers can see the outcome of the cases their reports started                                                                                                                                                                                | [Mobile App](/frontend-mobile) |
-| Preventing future illness                  | **Preventive recommendations**         | Suggested preventive measures are saved as proposals and approved or rejected by a vet. Those decisions improve future suggestions                                                                                                             | [AI Module](/ai)               |
-| Sensitive data                             | **Role-based access and audit trail**  | Each user sees only what their role allows, enforced by the server; important actions are recorded                                                                                                                                             | [Security](/security)          |
+| Problem                                    | Feature                               | What it does                                                                                                                                                                     | Learn more                     |
+| ------------------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Reports lost where there is no signal      | **Offline-first app**                 | Trackers record observations with no signal; they are saved on the phone and sent automatically when signal returns. The app works the same online and offline                   | [Mobile App](/frontend-mobile) |
+| Missing information mistaken for "normal"  | **Uncertainty states**                | Trackers can record "not seen", "not observed" or "unable to assess". These stay on the record and are shown to the vet                                                          | [Mobile App](/frontend-mobile) |
+| The same report sent through many channels | **Report status**                     | Each report shows whether it is waiting to send, sent, seen or acknowledged                                                                                                      | [Mobile App](/frontend-mobile) |
+| Cases that never formally end              | **Health cases**                      | Gorilla doctors can open and manage cases, and explicitly link observations; automatic case creation is not documented                                                           | [Backend](/backend)            |
+| History that is hard to find               | **Case summary and health timeline**  | One screen with the concern, history, group context and open actions, plus a timeline of every event for each gorilla                                                            | [Web App](/frontend-web)       |
+| Patterns that nobody sees                  | **Group cluster alert**               | A proposed threshold is 3 or more gorillas in the same group with similar signs within 14 days; implementation and threshold behavior need verification                          | [Backend](/backend)            |
+| Patterns that nobody sees                  | **Weather and environment**           | Weather for the place and time of each observation is attached and compared with normal conditions. It is shown as context, never as a cause                                     | [AI Module](/ai)               |
+| Deciding what comes first                  | **AI risk assessment**                | The documented AI pipeline checks outputs for grounding and safety before saving predictions. These checks do not establish clinical accuracy; results require veterinary review | [AI Module](/ai)               |
+| Deciding what comes first                  | **Risk map**                          | A satellite map showing gorilla groups, open cases and areas of higher risk                                                                                                      | [Web App](/frontend-web)       |
+| Decisions disconnected from action         | **Decision and follow-up task**       | A vet can create a follow-up task for an open case as a separate operation, with an assignee and due date                                                                        | [Backend](/backend)            |
+| Follow-up that is invisible                | **Follow-up tracking**                | Every task has an owner, a due date and a result. Overdue tasks are flagged                                                                                                      | [Backend](/backend)            |
+| Trackers never hear what happened          | **Feedback to trackers**              | The mobile guide describes task and case feedback; automatic linking from a task outcome to a case observation is an open backend gap                                            | [Mobile App](/frontend-mobile) |
+| Preventing future illness                  | **Preventive recommendations**        | Suggested preventive measures are saved as proposals and approved or rejected by a vet. Those decisions improve future suggestions                                               | [AI Module](/ai)               |
+| Sensitive data                             | **Role-based access and audit trail** | Each user sees only what their role allows, enforced by the server; important actions are recorded                                                                               | [Security](/security)          |
 
 ### Health signals: when does something need a vet?
 
 Canopy watches a set of signals. Each one has a "healthy" state and a "concerning" state. A concerning state means **"a vet should look at this"**, not "this gorilla has a disease".
 
-| Signal                    | Healthy                                                        | Concerning                                                        | What Canopy does                                                                            |
-| ------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| A sign in one gorilla     | Recorded as "all normal"                                       | A specific sign: breathing, digestive, injury, behaviour or other | Puts it in the vet's queue within minutes of syncing; emergencies are escalated immediately |
-| Uncertainty               | The sign was clearly seen, or clearly absent                   | "Not observed" or "unable to assess"                              | Keeps it on the record and highlights it for the vet                                        |
-| Several gorillas affected | Fewer than 3 with similar signs in 14 days                     | 3 or more with similar signs in 14 days                           | Raises a group cluster flag with the observations behind it                                 |
-| Follow-up                 | Done by the due date, with a result                            | More than 24 hours overdue                                        | Flags it to the programme manager                                                           |
-| Contact with people       | No sick visitors or staff near the group in the last 7–14 days | A sick tourist or staff member was near the group                 | Adds it to the case timeline as context                                                     |
-| Environment               | Normal conditions over the last 3, 7, 14 or 30 days            | Unusual weather compared with normal for that place               | Shows it alongside the case, never as the cause                                             |
+| Signal                    | Healthy                                                        | Concerning                                                        | What Canopy does                                                                                  |
+| ------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| A sign in one gorilla     | Recorded as "all normal"                                       | A specific sign: breathing, digestive, injury, behaviour or other | Requires veterinary review; automated queue timing and emergency escalation are not verified here |
+| Uncertainty               | The sign was clearly seen, or clearly absent                   | "Not observed" or "unable to assess"                              | Keeps it on the record and highlights it for the vet                                              |
+| Several gorillas affected | Fewer than 3 with similar signs in 14 days                     | Proposed threshold: 3 or more with similar signs in 14 days       | Intended cluster rule; implementation is not verified here                                        |
+| Follow-up                 | Done by the due date, with a result                            | More than 24 hours overdue                                        | Flags it to the programme manager                                                                 |
+| Contact with people       | No sick visitors or staff near the group in the last 7–14 days | A sick tourist or staff member was near the group                 | Adds it to the case timeline as context                                                           |
+| Environment               | Normal conditions over the last 3, 7, 14 or 30 days            | Unusual weather compared with normal for that place               | Shows it alongside the case, never as the cause                                                   |
 
-### Technology: what was planned and what was built
+### Technology: planned choices and documented implementation
+
+The implementation column reflects claims in the project documentation; it is not independently verified against the application repositories in this workspace.
 
 | Need                          | Planned in the product requirements | Built with                                                                 |
 | ----------------------------- | ----------------------------------- | -------------------------------------------------------------------------- |
@@ -331,7 +335,7 @@ Canopy watches a set of signals. Each one has a "healthy" state and a "concernin
 
 ## Product requirements
 
-### What Canopy must achieve
+### Product goals
 
 1. Keep the way trackers already collect data, with **no duplicate data entry**.
 2. Connect observations, history, group context and follow-up into **one continuous case**.
@@ -345,7 +349,7 @@ Canopy watches a set of signals. Each one has a "healthy" state and a "concernin
 10. Control access **by role** and **record** every significant action.
 11. Keep **the vet's judgement at the centre** of every clinical decision.
 
-### What was built first: MoSCoW
+### Product requirement priorities: MoSCoW
 
 MoSCoW sorts features into what the product **M**ust have, **S**hould have, **C**ould have and **W**on't have.
 
