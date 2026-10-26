@@ -7,7 +7,6 @@ export default withMermaid(
     title: "Canopy",
     description: "Technical documentation for Canopy",
     cleanUrls: true,
-    ignoreDeadLinks: false,
     lastUpdated: true,
     appearance: true,
     vite: {
