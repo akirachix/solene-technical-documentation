@@ -1,8 +1,7 @@
 ---
 title: Developer guide
 description: CANOPY Developer guide
-status: verified
-evidence: []
+status: review
 ---
 
 # CANOPY Developer Guide
