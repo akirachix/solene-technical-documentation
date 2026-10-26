@@ -1,8 +1,7 @@
 ---
 title: Frontend Web
 description: Architecture, routing, and workflows for the CANOPY Next.js portal.
-status: verified
-evidence: []
+status: review
 ---
 
 # CANOPY Frontend Web Portal
