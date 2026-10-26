@@ -30,7 +30,7 @@ This page explains Canopy from the beginning, in the order the product was desig
 10. **[How we measure success](#how-we-measure-success).** The main metric and supporting metrics.
 11. **[What comes next](#what-comes-next).** The pilot, roadmap and conditions for going live.
 
-If a word is unfamiliar, check the [glossary](#glossary) at the end.
+If a word is unfamiliar, check the [glossary](#glossary) at the end. For the full detail behind this page, see the [source documents](#source-documents).
 
 ## Why mountain gorillas need help
 
@@ -481,16 +481,11 @@ Canopy will only move from a prototype to real use after passing eight checks.
 | Access control and data protection   | [Security](/security)                     |
 | How Canopy looks and behaves         | [Design & Guidelines](/design-guidelines) |
 
-## References
+## Source documents
 
-The figures on this page come from the CANOPY research report and product requirements document. Key sources:
+Everything on this page is based on two documents written while designing Canopy. Read them for the full detail, evidence and references.
 
-- Robbins, M. M., et al. (2011). Extreme conservation leads to recovery of the Virunga mountain gorillas. _PLoS One_, 6(6). [doi.org/10.1371/journal.pone.0019788](https://doi.org/10.1371/journal.pone.0019788)
-- Nutter, F. B., et al. (2013). Respiratory disease in mountain gorillas in Rwanda, 1990–2010. _Journal of Zoo and Wildlife Medicine_, 44(1). [doi.org/10.1638/2012-0116R.1](https://doi.org/10.1638/2012-0116R.1)
-- Palacios, G., et al. (2011). Human metapneumovirus infection in wild mountain gorillas, Rwanda. _Emerging Infectious Diseases_, 17(4). [doi.org/10.3201/eid1704.100883](https://doi.org/10.3201/eid1704.100883)
-- Xue, Y., et al. (2015). Mountain gorilla genomes reveal the impact of long-term population decline and inbreeding. _Science_, 348(6231). [doi.org/10.1126/science.aaa395](https://doi.org/10.1126/science.aaa395)
-- IGCP and GVTC. (2019). _2018 Mountain gorilla census report._ [igcp.org/census](https://www.igcp.org/census)
-- IUCN. (2018). _Gorilla beringei beringei_ Red List assessment. [iucnredlist.org](https://www.iucnredlist.org/species/39999/102326554)
-- Gorilla Doctors. Annual reports. [gorilladoctors.org/annual-reports](https://www.gorilladoctors.org/annual-reports)
-- SMART Conservation Tools. [smartconservationtools.org](https://smartconservationtools.org)
-- EarthRanger. [earthranger.com](https://earthranger.com)
+| Document                                                                                                                                | What it covers                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Research report](https://docs.google.com/document/d/1ul7OiGLB9B0EDY3lq-xmhEUrR3JehwMYsYTYWlhCv9M/edit?usp=sharing)                     | The conservation and health context, research method, practitioner interviews, problem breakdown, users, existing systems, proposed solution, feasibility and scientific references |
+| [Product requirements document (PRD)](https://docs.google.com/document/d/1Ug0A8Si3KWfFguMVAXvLTLa16ETbZsamt6VmJiAqn3Y/edit?usp=sharing) | The problem statement, product goals, stakeholders, personas, jobs to be done, features, scope, dependencies, assumptions, metrics and prioritisation                               |
