@@ -1,6 +1,3 @@
 {
-  "proseWrap": "preserve",
-  "singleQuote": true,
-  "semi": false,
-  "trailingComma": "all"
+  "proseWrap": "preserve"
 }
