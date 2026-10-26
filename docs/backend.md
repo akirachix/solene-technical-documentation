@@ -6,13 +6,13 @@ The CANOPY API is a single FastAPI service that holds every Solene record (users
 
 | Area              | Choice                                               | Notes                                                                                        |
 | ----------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Language          | Python 3                                             | Exact minor version: confirm from `pyproject.toml`                                           |
-| Web framework     | FastAPI                                              | App title "Canopy API", version 0.1.0; Swagger UI at `/docs`                                 |
+| Language          | Python 3.11+                                         | `requires-python = ">=3.11"` in `pyproject.toml`                                             |
+| Web framework     | FastAPI                                              | App title "Canopy API", version 0.1.0; Swagger UI at `/docs` (off in production)             |
 | ORM               | SQLAlchemy (declarative models)                      | Sessions per request via `database.get_db`                                                   |
 | Validation        | Pydantic v2                                          | Shared base classes in `schemas/common.py`                                                   |
 | Database          | PostgreSQL + PostGIS                                 | `locations.grid_dimension` is a PostGIS polygon (SRID 4326); SQLite is only a local fallback |
-| Migrations        | Alembic                                              | Linear revision chain, see section 5                                                         |
-| Cache / OTP store | Upstash Redis (REST)                                 | Login codes and forgot-password cooldown                                                     |
+| Migrations        | Alembic                                              | One head; history includes merge revisions, see section 5                                    |
+| Cache / OTP store | Upstash Redis (REST)                                 | Login codes, lockouts, rate limits and forgot-password cooldown                              |
 | Auth              | JWT (HS256, python-jose) + Argon2 password hashing   | Email one-time code on every login                                                           |
 | Email             | SMTP                                                 | Invites, login codes, password links                                                         |
 | Push              | Firebase Cloud Messaging HTTP v1                     | Via a Google service account                                                                 |
@@ -123,7 +123,7 @@ All settings come from environment variables: `.env` locally (loaded by `python-
 | `SECRET_KEY`                                                                      | Yes (app won't start) | none, must be 32+ chars      | Signs JWTs and hashes login codes                                                  |
 | `ACCESS_TOKEN_EXPIRE_MINUTES`                                                     | No                    | 30                           | Access token lifetime                                                              |
 | `PASSWORD_LINK_EXPIRE_HOURS`                                                      | No                    | 1                            | Invite / reset link lifetime                                                       |
-| `CORS_ORIGINS`                                                                    | Yes for browsers      | empty                        | Comma-separated list of allowed web origins                                        |
+| `ALLOWED_ORIGINS`                                                                 | Yes for browsers      | empty                        | Comma-separated list of allowed web origins                                        |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`                              | Yes for login         | none                         | OTP codes, forgot-password cooldown                                                |
 | `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`                        | Yes for email         | none                         | Sending invites, login codes, resets                                               |
 | `SMTP_PORT`                                                                       | No                    | 587                          | 465 = implicit TLS, otherwise STARTTLS                                             |
@@ -138,11 +138,11 @@ All settings come from environment variables: `.env` locally (loaded by `python-
 | `GEMINI_MODEL`, `GEMINI_FALLBACK_MODELS`                                          | No                    | see AI section               | Main model and comma-separated fallbacks                                           |
 | `AI_REQUESTS_PER_MINUTE`                                                          | No                    | 10                           | Per-user limit shared by both AI endpoints                                         |
 
-Fixed in code (`core/config.py`): JWT algorithm HS256, 5 failed logins trigger a 15-minute lockout (held in process memory, see G-33). Login codes are 6 digits, valid 5 minutes, with 5 attempts (`services/auth_service.py`).
+Fixed in code (`core/config.py`): JWT algorithm HS256, 5 failed logins trigger a 15-minute lockout, and an IP address is limited for 15 minutes after repeated failures (`LOCKOUT_MINUTES`, `IP_LOCKOUT_MINUTES`). Lockout counters are stored in Redis, so they survive restarts and are shared by every worker (see [Security](/security)). Login codes are 6 digits, valid 5 minutes, with 5 attempts (`services/auth_service.py`).
 
 ## 4. Data model
 
-The database has 16 tables on develop (including `notifications` and `device_tokens` from PR #56) plus `gorilla_groups` in an open PR. Every primary key is a UUID generated by the app (`uuid4`), and every timestamp is stored with a time zone and handled as UTC.
+The main tables are listed below. Every primary key is a UUID generated by the app (`uuid4`), and every timestamp is stored with a time zone and handled as UTC.
 
 ### 4.1 Tables
 
@@ -150,7 +150,7 @@ The database has 16 tables on develop (including `notifications` and `device_tok
 | ------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `users`                         | Everyone who signs in                                 | `user_id`, `first_name`, `last_name`, `role`, `email`, `phone`, `password_hash`, `is_active`, `must_change_password`, `created_at`, `last_login_at`                                                   | `email` unique, `phone` unique                                                                                          |
 | `gorillas`                      | The gorilla registry                                  | `gorilla_id`, `user_id` (registered by), `group_name`, `name`, `sex`, `birth_date`, `age_category`, `status`, `created_at`                                                                            | Unique (`group_name`, `name`)                                                                                           |
-| `gorilla_groups` (open PR)      | Family groups, editable without a deploy              | `group_id`, `name`, `is_active`, `created_at`                                                                                                                                                         | `name` unique, case-insensitive unique index on `lower(name)`                                                           |
+| `gorilla_groups`                | Family groups, editable without a deploy              | `group_id`, `name`, `is_active`, `created_at`                                                                                                                                                         | `name` unique, case-insensitive unique index on `lower(name)`                                                           |
 | `locations`                     | Map grid cells                                        | `grid_id`, `grid_name`, `grid_dimension` (PostGIS POLYGON, SRID 4326), `latitude`, `longitude`                                                                                                        |                                                                                                                         |
 | `observations`                  | One field sign seen by a tracker                      | `observation_id`, `gorilla_id?`, `group_name?`, `user_id` (tracker), `grid_id`, `case_id?`, `image_id?`, `symptom_category`, `symptom_name`, `severity`, `notes`, `flagged_for_vet`, `observed_at`    | CHECK: `gorilla_id` or `group_name` must be set                                                                         |
 | `observation_images`            | Photo evidence, stored in the database                | `image_id`, `content_type`, `size_bytes`, `sha256`, `data` (bytes, loaded lazily), `uploaded_at`                                                                                                      | JPEG/PNG only, 5 MB max (checked in service)                                                                            |
@@ -165,28 +165,29 @@ The database has 16 tables on develop (including `notifications` and `device_tok
 | `prediction_observations`       | Join: prediction to observations used                 | (`prediction_id`, `observation_id`)                                                                                                                                                                   | Composite PK, ON DELETE CASCADE both sides                                                                              |
 | `prediction_environmental_data` | Join: prediction to weather readings used             | (`prediction_id`, `environmental_id`)                                                                                                                                                                 | Composite PK, ON DELETE CASCADE                                                                                         |
 | `prediction_reference_files`    | Join: prediction to reference files cited             | (`prediction_id`, `file_id`)                                                                                                                                                                          | Composite PK, ON DELETE CASCADE                                                                                         |
+| `audit_logs`                    | Record of updates and deletes                         | `id` (integer), `created_at`, `action` (`update` or `delete`), `table_name`, `record_id`, `actor_id`, `actor_role`, `ip`, `changes` (JSON)                                                            | Indexes on `created_at`, `table_name`, `actor_id`, and (`table_name`, `record_id`)                                      |
 
-`?` = nullable foreign key.
+`?` = nullable foreign key. Primary keys are UUIDs except `audit_logs.id`, which is an integer. The AI response tables (migration `5f6c7c5086f6`) are not listed here yet.
 
 ### 4.2 Relationships
 
-| From                  | To                                                          | Cardinality         | Meaning                                                    |
-| --------------------- | ----------------------------------------------------------- | ------------------- | ---------------------------------------------------------- |
-| `users`               | `gorillas`                                                  | 1 to many           | Vet who registered the gorilla                             |
-| `users`               | `observations`                                              | 1 to many           | Tracker who logged it                                      |
-| `users`               | `health_cases`                                              | 1 to many           | Responsible vet (current only, no history)                 |
-| `users`               | `follow_up_tasks`                                           | 1 to many, twice    | `assigned_to` (tracker) and `assigned_by` (vet)            |
-| `users`               | `notifications`, `device_tokens`                            | 1 to many           | Recipient / device owner                                   |
-| `users`               | `preventive_recommendations`                                | 1 to many           | Reviewer                                                   |
-| `gorillas`            | `observations`, `health_cases`, `disease_predictions`       | 1 to many           |                                                            |
-| `gorilla_groups`      | `gorillas`, `observations`                                  | 1 to many (open PR) | Via `group_name`, FK ON UPDATE CASCADE so a rename follows |
-| `health_cases`        | `observations`                                              | 1 to many           | An observation joins at most one case                      |
-| `health_cases`        | `follow_up_tasks`, `notifications`                          | 1 to many           |                                                            |
-| `follow_up_tasks`     | `notifications`                                             | 1 to many           |                                                            |
-| `locations`           | `observations`, `environmental_data`, `disease_predictions` | 1 to many           |                                                            |
-| `observation_images`  | `observations`                                              | 1 to many           | A batch submission shares one photo                        |
-| `disease_predictions` | `preventive_recommendations`                                | 1 to many           |                                                            |
-| `disease_predictions` | `observations`, `environmental_data`, `ai_reference_files`  | many to many        | Through the three join tables                              |
+| From                  | To                                                          | Cardinality      | Meaning                                                    |
+| --------------------- | ----------------------------------------------------------- | ---------------- | ---------------------------------------------------------- |
+| `users`               | `gorillas`                                                  | 1 to many        | Vet who registered the gorilla                             |
+| `users`               | `observations`                                              | 1 to many        | Tracker who logged it                                      |
+| `users`               | `health_cases`                                              | 1 to many        | Responsible vet (current only, no history)                 |
+| `users`               | `follow_up_tasks`                                           | 1 to many, twice | `assigned_to` (tracker) and `assigned_by` (vet)            |
+| `users`               | `notifications`, `device_tokens`                            | 1 to many        | Recipient / device owner                                   |
+| `users`               | `preventive_recommendations`                                | 1 to many        | Reviewer                                                   |
+| `gorillas`            | `observations`, `health_cases`, `disease_predictions`       | 1 to many        |                                                            |
+| `gorilla_groups`      | `gorillas`, `observations`                                  | 1 to many        | Via `group_name`, FK ON UPDATE CASCADE so a rename follows |
+| `health_cases`        | `observations`                                              | 1 to many        | An observation joins at most one case                      |
+| `health_cases`        | `follow_up_tasks`, `notifications`                          | 1 to many        |                                                            |
+| `follow_up_tasks`     | `notifications`                                             | 1 to many        |                                                            |
+| `locations`           | `observations`, `environmental_data`, `disease_predictions` | 1 to many        |                                                            |
+| `observation_images`  | `observations`                                              | 1 to many        | A batch submission shares one photo                        |
+| `disease_predictions` | `preventive_recommendations`                                | 1 to many        |                                                            |
+| `disease_predictions` | `observations`, `environmental_data`, `ai_reference_files`  | many to many     | Through the three join tables                              |
 
 ### 4.3 Enumerations
 
@@ -196,7 +197,6 @@ The database has 16 tables on develop (including `notifications` and `device_tok
 | `gorilla_sex`           | `male`, `female`                                                                                                                             |
 | `gorilla_age_category`  | `infant`, `juvenile`, `blackback`, `silverback`, `adult_female`                                                                              |
 | `gorilla_status`        | `active`, `migrated`, `deceased`, `missing`                                                                                                  |
-| `gorilla_group_name`    | 28 fixed group names (Amahoro to Kwisanga). Replaced by the `gorilla_groups` table in the open PR                                            |
 | `symptom_category`      | `respiratory`, `gastrointestinal`, `skin_or_wound_injury`, `appetite_or_feeding`, `lethargy_or_behaviour`, `other`                           |
 | `observation_severity`  | `mild`, `moderate`, `severe`                                                                                                                 |
 | `case_priority`         | `low`, `medium`, `high`, `critical`                                                                                                          |
@@ -215,21 +215,40 @@ Not stored, computed per response: observation review status (`pending_review`, 
 
 ### 4.4 Audit log, row-level security and backup
 
-> To complete from the security branch: the audit table name and columns, which actions are logged, how the hash chain is built and verified, which tables have row-level security policies and how the API passes the current user to PostgreSQL, and how the Supabase backup is scheduled and restored. Add the matching revisions to section 5 and mark them "open PR" until merged.
+**Audit log.** The `audit_logs` table (`models/audit_log.py`, migration `b82f26b98e55`) records every update and delete: when it happened, the action, the table and record ID, the user ID and role that made the change, their IP address, and the changed fields as JSON (`core/db_audit.py`). Password hashes are excluded from the recorded changes. Record creation is not logged, and entries are not hash-chained.
+
+**Row-level security.** Not implemented. Ownership rules are enforced in the API services (see [Security](/security)).
+
+**Backup.** See [Security](/security).
 
 ## 5. Migrations
 
-Schema changes go through Alembic only, as one linear chain with exactly one head. The database is never dropped and recreated to fix a migration problem.
+Schema changes go through Alembic only. The history contains merge revisions from parallel branches, but there must always be exactly one head (`alembic heads`). The database is never dropped and recreated to fix a migration problem.
 
-### Latest revisions
+### Revisions
 
-| Revision       | Down revision  | Change                                                                                                                                            | Status                       |
-| -------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| `a7c3e1f2b9d4` | `f84d68e4c1fd` | Create `gorilla_groups`, seed it from the old enum and from names already in use, add FKs (ON UPDATE CASCADE), drop the `gorilla_group_name` enum | Open PR, after notifications |
-| `f84d68e4c1fd` | `c4d2e8f1a6b3` | Create `notifications`, `device_tokens` and their four enum types                                                                                 | PR #56                       |
-| `c4d2e8f1a6b3` | earlier chain  | Includes a fix that casts `group_name` to `gorilla_group_name`                                                                                    | On develop                   |
+Full history, newest first (from `alembic history`):
 
-The revisions before `c4d2e8f1a6b3` should be listed here from `alembic history`.
+| Revision              | Down revision                                  | Change                                                             |
+| --------------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
+| `b82f26b98e55` (head) | `4f2a9c71d8e3`                                 | Add `audit_logs` table                                             |
+| `4f2a9c71d8e3`        | `b793ed098927`                                 | Add `gorilla_groups` table and point `group_name` columns at it    |
+| `b793ed098927`        | `25435e5feaad`, `dfc8dff4b5b4`                 | Merge latest heads                                                 |
+| `25435e5feaad`        | `53a0c3551c40`, `577ac3181020`, `ee776527be76` | Merge all current heads                                            |
+| `53a0c3551c40`        | `f84d68e4c1fd`, `5f6c7c5086f6`                 | Merge notification and AI response heads                           |
+| `dfc8dff4b5b4`        | `577ac3181020`, `ee776527be76`                 | Merge observation submission and AI heads                          |
+| `ee776527be76`        | `5f6c7c5086f6`, `d5e7f9a1b3c2`                 | Merge heads                                                        |
+| `f84d68e4c1fd`        | `c4d2e8f1a6b3`                                 | Add `notifications` and `device_tokens`                            |
+| `577ac3181020`        | `c4d2e8f1a6b3`                                 | Add observation submission ID                                      |
+| `5f6c7c5086f6`        | `c4d2e8f1a6b3`                                 | Add AI response tables                                             |
+| `d5e7f9a1b3c2`        | `c4d2e8f1a6b3`                                 | Add prediction provenance                                          |
+| `c4d2e8f1a6b3`        | `b7c1e2a4d9f0`                                 | Add group observations and case numbers                            |
+| `b7c1e2a4d9f0`        | `38d9debffaec`                                 | Add observation images                                             |
+| `38d9debffaec`        | `a93b9680f1bd`, `e99b8c8953f4`                 | Merge follow-up and gorilla heads                                  |
+| `a93b9680f1bd`        | `8c1f4e2a9b7d`                                 | Add `cancelled` to task status                                     |
+| `e99b8c8953f4`        | `8c1f4e2a9b7d`                                 | User invites, gorilla group name                                   |
+| `8c1f4e2a9b7d`        | `3729eae6a8c8`                                 | Require every disease prediction to target a location or a gorilla |
+| `3729eae6a8c8`        | none                                           | Initial schema setup                                               |
 
 ### Commands
 
@@ -249,11 +268,11 @@ alembic downgrade -1            # undo the last migration (local only)
 - Create PostgreSQL enum types explicitly in `upgrade()` and drop them with `DROP TYPE IF EXISTS` in `downgrade()`.
 - A branch that adds a migration sets its `down_revision` to the current head of develop. After merging develop, run `alembic heads`; two heads means the `down_revision` must be updated.
 - If a table was created outside Alembic, run `alembic stamp <revision>` instead of creating it again.
-- On Heroku, run `alembic upgrade head` after each deploy that adds a migration.
+- On Heroku, migrations run automatically: the `Procfile` release step (`release: alembic upgrade head`) applies them before each new version starts.
 
 ## 6. API reference
 
-The API has 79 endpoints across 16 routers, counting the two open PRs and `GET /health`, plus the AI router (`routers/ai_router.py`) and `GET /disease-predictions/risk-by-zone` described in the AI section. Update the total once the AI work is merged. The live, always-current version is Swagger at `/docs`. Who can call: A admin, D gorilla doctor, T gorilla tracker, Signed in = any active user, Public = no token needed.
+The tables below list every endpoint by area. The live, always-current version is Swagger at `/docs`, available locally; it is turned off in production (`ENVIRONMENT=production`). Who can call: A admin, D gorilla doctor, T gorilla tracker, Signed in = any active user, Public = no token needed.
 
 ### Authentication `/auth`
 
@@ -282,15 +301,15 @@ The API has 79 endpoints across 16 routers, counting the two open PRs and `GET /
 
 ### Gorillas `/gorillas` and groups `/gorilla-groups`
 
-| Method | Path                         | Who                 | Purpose                                                |
-| ------ | ---------------------------- | ------------------- | ------------------------------------------------------ |
-| POST   | `/gorillas/`                 | D                   | Register a gorilla (name unique within its group)      |
-| GET    | `/gorillas/`                 | D, T                | List, filter by `group_name`, `status`                 |
-| GET    | `/gorillas/{gorilla_id}`     | D, T                | One gorilla                                            |
-| PATCH  | `/gorillas/{gorilla_id}`     | D                   | Edit (sex / age-category consistency checked)          |
-| GET    | `/gorilla-groups/`           | Signed in (open PR) | Active groups; `include_inactive=true` for all         |
-| POST   | `/gorilla-groups/`           | A, D (open PR)      | Add a group (name unique ignoring case)                |
-| PATCH  | `/gorilla-groups/{group_id}` | A, D (open PR)      | Rename or (de)activate; renames carry over to gorillas |
+| Method | Path                         | Who       | Purpose                                                |
+| ------ | ---------------------------- | --------- | ------------------------------------------------------ |
+| POST   | `/gorillas/`                 | D         | Register a gorilla (name unique within its group)      |
+| GET    | `/gorillas/`                 | D, T      | List, filter by `group_name`, `status`                 |
+| GET    | `/gorillas/{gorilla_id}`     | D, T      | One gorilla                                            |
+| PATCH  | `/gorillas/{gorilla_id}`     | D         | Edit (sex / age-category consistency checked)          |
+| GET    | `/gorilla-groups/`           | Signed in | Active groups; `include_inactive=true` for all         |
+| POST   | `/gorilla-groups/`           | A, D      | Add a group (name unique ignoring case)                |
+| PATCH  | `/gorilla-groups/{group_id}` | A, D      | Rename or (de)activate; renames carry over to gorillas |
 
 ### Observations `/api/v1/observations`
 
@@ -330,7 +349,7 @@ The API has 79 endpoints across 16 routers, counting the two open PRs and `GET /
 | PATCH  | `/api/v1/follow-up-tasks/{task_id}/submit` | Assignee  | To `completed`, with outcome text                                             |
 | PATCH  | `/api/v1/follow-up-tasks/{task_id}/cancel` | D         | To `cancelled`, with a reason                                                 |
 
-### Notifications `/api/v1/notifications` (PR #56)
+### Notifications `/api/v1/notifications`
 
 | Method | Path                                    | Who             | Purpose                                                           |
 | ------ | --------------------------------------- | --------------- | ----------------------------------------------------------------- |
@@ -396,7 +415,7 @@ def create_password_link_token(user_id: uuid.UUID, password_hash: str) -> str:
 
 **Login.**
 
-- `POST /auth/login` checks the password with Argon2 (a dummy hash is checked when the email is unknown, so response time doesn't reveal accounts). Five failures lock the email for 15 minutes. The counter is kept in the process's memory, so it resets on restart and is not shared between dynos (G-33).
+- `POST /auth/login` checks the password with Argon2 (a dummy hash is checked when the email is unknown, so response time doesn't reveal accounts). Five failures lock the email for 15 minutes, and repeated failures from one IP address are blocked for 15 minutes. The counters are kept in Redis, so they survive restarts and are shared between dynos.
 - A 6-digit code is stored in Redis as an HMAC under `canopy:login_otp:{user_id}` for 5 minutes, and emailed. If the email fails, the code is deleted and the API returns 502.
 - `POST /auth/verify-otp` compares the code in constant time. Five wrong codes delete it. On success `last_login_at` is set and an access token is returned.
 
@@ -595,7 +614,7 @@ The case detail response adds context computed when it is requested: other recen
 - Submitting stores free-text outcome and `completed_at`. A task is reported `is_overdue` when it is still open after its `due_date`.
 - Completing a task does not close the case. The vet decides the next step.
 
-### 8.4 Notifications (PR #56)
+### 8.4 Notifications
 
 Each notification row is saved in the same transaction as the event that caused it, so the inbox is never out of step with the data. Push is sent after the response, in the background.
 
@@ -615,7 +634,7 @@ Push text is always generic (for example "You have a follow-up due today"). Case
 ### 8.5 Gorillas and groups
 
 - A gorilla name is unique within its group. Sex and age category must be consistent (`check_sex_and_age` in `schemas/gorilla.py`).
-- In the open PR, groups move from a fixed enum to the `gorilla_groups` table. Admins and doctors can add, rename and deactivate groups without a deploy. A rename updates existing gorillas, and inactive groups can't receive new gorillas or observations.
+- Groups are stored in the `gorilla_groups` table (migration `4f2a9c71d8e3`), which replaced the old fixed enum. Admins and doctors can add, rename and deactivate groups without a deploy. A rename updates existing gorillas, and inactive groups can't receive new gorillas or observations.
 
 ## 9. Background jobs and integrations
 
@@ -718,7 +737,7 @@ def update(self, case_id: uuid.UUID, data: HealthCaseUpdate) -> HealthCaseRead:
 
 ## 11. Testing
 
-The backend has a pytest suite of about 640 tests in `tests/`, one file per area (for example `test_user.py`, `test_gorilla.py`, `test_observations.py`, `test_notifications.py`, `test_gorilla_group.py`, `test_alembic_env.py`). The last local run on the notifications branch passed all but 2 tests; record the current count here before submission.
+The backend has a pytest suite in `tests/`, one file per area (for example `test_user.py`, `test_gorilla.py`, `test_observations.py`, `test_notifications.py`, `test_gorilla_group.py`, `test_alembic_env.py`). The CI run on 26 October 2026 passed 783 tests, with 16 skipped and 2 expected failures, and 84% line coverage.
 
 **How the tests work**
 
@@ -755,9 +774,9 @@ The backend runs on Heroku and deploys automatically whenever `main` changes. Al
 **Releasing to Heroku**
 
 1. Merge the release PR into `main`; Heroku builds and deploys.
-2. If the release adds a migration, run `heroku run alembic upgrade head` (or the app's release step, if one is configured).
+2. Migrations run automatically through the `Procfile` release step. If it fails, Heroku keeps the previous version running; check `heroku logs`.
 3. Make sure every new config var from section 3 is set (`heroku config`).
-4. Check `GET /health` and `/docs`.
+4. Check `GET /health` returns 200, and `/docs` returns 404 in production.
 
 **Add-ons and scheduled work**
 
@@ -773,35 +792,42 @@ The backend runs on Heroku and deploys automatically whenever `main` changes. Al
 
 **Secrets.** Secrets live only in Heroku config vars and local `.env` files, and are never pasted into chats, tickets or PRs. A key that has been exposed is deleted in its console (for example Google Cloud) and replaced, not just removed from git.
 
-The `Procfile` / web command and the Python runtime pin should be copied in here from the repository.
+**Procfile.** Heroku runs migrations on every release, then starts the API:
+
+```text
+release: alembic upgrade head
+web: uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+The project requires Python 3.11 or newer (`requires-python = ">=3.11"` in `pyproject.toml`). See [Deployment](/deployment) for the full release process.
 
 ## 13. Known gaps and open decisions
 
-Three backend gaps should be closed before release: unauthenticated prediction and location endpoints, no audit history, and follow-up results that never reach the case. Status below is as of 22 Oct, updated from the team gap register (`docs/solene-gap-register.md`, 20 Oct).
+Two backend gaps should be closed before release: unauthenticated prediction and location endpoints, and follow-up results that never reach the case. Status below is as of 26 Oct, based on the team gap register (`docs/solene-gap-register.md`).
 
-| ID          | Gap                                                                                                                   | Priority | Status                                                                                        |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
-| G-01        | `/disease-predictions/*` endpoints need no login                                                                      | Critical | Open                                                                                          |
-| G-02        | `/api/v1/locations` (including POST) needs no login                                                                   | Critical | Open                                                                                          |
-| G-04        | No audit trail: reassignment, edits, close/reopen overwrite history                                                   | Critical | Audit log implemented by the team; record the PR and revision here and in section 4.4         |
-| G-05        | Clinical fields are single text columns; a new treatment erases the old one                                           | Critical | Open, needs decision                                                                          |
-| G-07        | Trackers can hard-delete unlinked observations                                                                        | Critical | Open, needs decision                                                                          |
-| G-08        | Two role-check helpers (`core.dependencies.require_roles` and `services.auth_service.require_role`)                   | Medium   | Open                                                                                          |
-| G-11        | Follow-up submit stores only free text; no observation is linked to the case                                          | High     | Open                                                                                          |
-| G-12        | Task validation                                                                                                       | High     | Partly fixed: assignee and case now checked; a past `due_date` is still accepted              |
-| G-13        | No tracker-to-group assignment, so tasks can't be routed by group                                                     | High     | Open, needs decision                                                                          |
-| G-14        | Observation review is derived; a vet can't mark "reviewed, no case"                                                   | High     | Open, needs decision                                                                          |
-| G-15 / G-16 | No dedicated reassign endpoint or assignment history; any doctor can edit any case                                    | High     | Partly: reassignment now notifies the new vet                                                 |
-| G-17        | A case can close while its follow-up tasks are open                                                                   | High     | Open, needs decision                                                                          |
-| G-21        | No idempotency key; a retried observation upload creates duplicates                                                   | High     | Open. Blocks safe mobile offline sync, which plans a `client_ref` key                         |
-| G-25 / G-26 | Mixed route prefixes and list shapes (`Page` vs. bare array)                                                          | Medium   | Open                                                                                          |
-| G-27        | Questionable transitions (`awaiting_result` to `reopened`; no `new` to `closed`)                                      | Medium   | Open, needs decision                                                                          |
-| G-33        | Login lockout is in-process memory, lost on restart and not shared                                                    | Medium   | Open                                                                                          |
-| G-06        | Migrations                                                                                                            |          | Resolved: Alembic in use. Still check the SQLite fallback and that no `.db` file is committed |
-| G-31        | Notifications backend                                                                                                 |          | Resolved by PR #56 (update to "merged" once it is on develop)                                 |
-| G-35        | No backend tests                                                                                                      |          | Resolved: about 640 tests                                                                     |
-| New         | Photo rules disagree: the router says "JPEG, PNG or HEIC, max 10 MB" but the service accepts only JPEG/PNG up to 5 MB | Low      | Open                                                                                          |
-| New         | Opening a case for another vet saves the case, then its notification in a second commit                               | Low      | Open                                                                                          |
-| New         | Daily weather collection is manual only (REQ-070)                                                                     | Medium   | Open                                                                                          |
-| New         | `HEALTH_READERS` includes admin, so admins can read health cases and predictions, against the no-clinical-data rule   | High     | Open                                                                                          |
-| New         | Server rules for a backdated or future `observed_at` sent by offline sync are not documented                          | Medium   | Needs confirmation                                                                            |
+| ID          | Gap                                                                                                                   | Priority | Status                                                                                                                                     |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| G-01        | `/disease-predictions/*` endpoints need no login                                                                      | Critical | Open                                                                                                                                       |
+| G-02        | `/api/v1/locations` (including POST) needs no login                                                                   | Critical | Open                                                                                                                                       |
+| G-04        | No audit trail: reassignment, edits, close/reopen overwrite history                                                   | Critical | Partly fixed: `audit_logs` records updates and deletes (migration `b82f26b98e55`). Inserts are not logged and entries are not hash-chained |
+| G-05        | Clinical fields are single text columns; a new treatment erases the old one                                           | Critical | Open, needs decision                                                                                                                       |
+| G-07        | Trackers can hard-delete unlinked observations                                                                        | Critical | Open, needs decision                                                                                                                       |
+| G-08        | Two role-check helpers (`core.dependencies.require_roles` and `services.auth_service.require_role`)                   | Medium   | Open                                                                                                                                       |
+| G-11        | Follow-up submit stores only free text; no observation is linked to the case                                          | High     | Open                                                                                                                                       |
+| G-12        | Task validation                                                                                                       | High     | Partly fixed: assignee and case now checked; a past `due_date` is still accepted                                                           |
+| G-13        | No tracker-to-group assignment, so tasks can't be routed by group                                                     | High     | Open, needs decision                                                                                                                       |
+| G-14        | Observation review is derived; a vet can't mark "reviewed, no case"                                                   | High     | Open, needs decision                                                                                                                       |
+| G-15 / G-16 | No dedicated reassign endpoint or assignment history; any doctor can edit any case                                    | High     | Partly: reassignment now notifies the new vet                                                                                              |
+| G-17        | A case can close while its follow-up tasks are open                                                                   | High     | Open, needs decision                                                                                                                       |
+| G-21        | No idempotency key; a retried observation upload creates duplicates                                                   | High     | Open. Blocks safe mobile offline sync, which plans a `client_ref` key                                                                      |
+| G-25 / G-26 | Mixed route prefixes and list shapes (`Page` vs. bare array)                                                          | Medium   | Open                                                                                                                                       |
+| G-27        | Questionable transitions (`awaiting_result` to `reopened`; no `new` to `closed`)                                      | Medium   | Open, needs decision                                                                                                                       |
+| G-33        | Login lockout was in-process memory, lost on restart and not shared                                                   | Medium   | Resolved: lockouts moved to Redis (SOL-421)                                                                                                |
+| G-06        | Migrations                                                                                                            |          | Resolved: Alembic in use. Still check the SQLite fallback and that no `.db` file is committed                                              |
+| G-31        | Notifications backend                                                                                                 |          | Resolved: notifications merged (migration `f84d68e4c1fd`)                                                                                  |
+| G-35        | No backend tests                                                                                                      |          | Resolved: 783 tests passing in CI                                                                                                          |
+| New         | Photo rules disagree: the router says "JPEG, PNG or HEIC, max 10 MB" but the service accepts only JPEG/PNG up to 5 MB | Low      | Open                                                                                                                                       |
+| New         | Opening a case for another vet saves the case, then its notification in a second commit                               | Low      | Open                                                                                                                                       |
+| New         | Daily weather collection is manual only (REQ-070)                                                                     | Medium   | Open                                                                                                                                       |
+| New         | `HEALTH_READERS` includes admin, so admins can read health cases and predictions, against the no-clinical-data rule   | High     | Open                                                                                                                                       |
+| New         | Server rules for a backdated or future `observed_at` sent by offline sync are not documented                          | Medium   | Needs confirmation                                                                                                                         |

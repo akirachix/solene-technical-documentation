@@ -1,7 +1,7 @@
 ---
 title: Security
 description: Canopy's authentication, authorization, data protection, and controls.
-status: draft
+status: Verified
 evidence:
   - core/security.py
   - core/dependencies.py
@@ -11,7 +11,10 @@ evidence:
   - services/security_headers.py
   - services/observation_image_service.py
   - main.py
+  - models/audit_log.py
+  - core/db_audit.py
 ---
+
 # Security
 
 CANOPY holds individual gorilla health records, case decisions, staff accounts and field locations. Precise gorilla locations are treated as Highly Restricted because their disclosure could create a poaching risk. This page describes the controls the backend enforces today and how they map to the target security architecture.
@@ -37,13 +40,14 @@ The diagram shows the target design. Some parts are not built yet (Keycloak, Clo
 | Authentication       | Keycloak (OIDC), refresh tokens, device binding, PIN unlock                         | Planned                         |
 | Authorization        | Role checks on the server, object-level checks for trackers                         | Implemented                     |
 | Authorization        | Login required on every endpoint                                                    | In progress (endpoint securing) |
-| Authorization        | PostgreSQL row-level security                                                       | Planned / to confirm            |
+| Authorization        | PostgreSQL row-level security                                                       | Planned                         |
 | Data protection      | TLS with HSTS and HTTPS redirect                                                    | Implemented (SOL-421)           |
 | Data protection      | Generic push text, grid cells instead of raw GPS on observations                    | Implemented                     |
 | Data protection      | Backup database on Supabase                                                         | Implemented                     |
 | Data protection      | EXIF/GPS stripping of photos                                                        | Planned (gap)                   |
 | Application security | Strict schemas, request size limits, safe errors, security headers, CORS allow-list | Implemented (SOL-421)           |
-| Audit                | Platform-wide audit log with a hash chain                                           | Implemented                     |
+| Audit                | Audit log of updates and deletes, with actor, role and IP                           | Implemented                     |
+| Audit                | Hash chain to make the audit log tamper-evident                                     | Planned                         |
 | AI                   | Output validation, safety filters, per-user rate limit                              | Implemented                     |
 | AI                   | Pseudonymised AI gateway                                                            | Planned                         |
 | Monitoring           | SIEM and security alerts                                                            | Planned                         |
@@ -110,8 +114,8 @@ Authorization is checked on the server for every protected request, in three lay
 2. **Role.** `require_roles(...)` returns 403 when the caller's role is not allowed.
 3. **Object.** Services check ownership of the record itself.
 
-| Role                | Can do                                                                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Role              | Can do                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `admin`           | Invite, edit and deactivate doctor and tracker accounts                                                                                     |
 | `gorilla_doctor`  | Register gorillas and groups, open and manage health cases, link observations, create and cancel follow-up tasks, review AI recommendations |
 | `gorilla_tracker` | Log observations, see and edit their own observations until they are linked to a case, accept and submit their own follow-up tasks          |
@@ -142,13 +146,11 @@ Object-level rules:
 
 **Least data in responses.** Password hashes and tokens are never returned. Validation errors (422) no longer echo the submitted input.
 
-**Backup.** A backup copy of the database is kept on Supabase, separate from the Heroku database.
+**Backup.** A backup copy of the database is kept on Supabase, separate from the Heroku database. The backup schedule, retention period and restore procedure are managed in Supabase and are not yet documented here.
 
-> To complete: backup schedule, retention, encryption, who can restore, and the last tested restore.
+**Audit log.** Updates and deletes are recorded in the `audit_logs` table (`models/audit_log.py`, migration `b82f26b98e55`). Each entry stores the time, the action (`update` or `delete`), the table and record ID, the user ID and role that made the change, their IP address, and the changed fields as JSON. Password hashes are excluded from the recorded changes (`core/db_audit.py`). Record creation is not logged.
 
-**Audit log.** Important changes are written to a platform-wide audit log. Each entry is chained to the previous one with a hash, so any edit or deletion of an earlier entry breaks the chain and can be detected.
-
-> To complete from the audit PR: table name and columns, the list of logged actions, how the hash is computed, how and when the chain is verified, and who can read the log.
+Planned: chaining each entry to the previous one with a hash, so that editing or deleting a log entry can be detected.
 
 **Gaps.** Photos are stored as uploaded, so EXIF metadata, including GPS position if the phone recorded it, is kept. Metadata stripping is planned in the media pipeline. The offline queue on the phone is protected by the app sandbox but not encrypted by the app (see the Mobile section).
 
@@ -158,11 +160,11 @@ Object-level rules:
 
 **Request size limits.**
 
-| Body             | Limit                        | Error |
-| ---------------- | ---------------------------- | ----- |
+| Body             | Limit                      | Error |
+| ---------------- | -------------------------- | ----- |
 | JSON             | 1 MB (`MAX_BODY_BYTES`)    | 413   |
 | Multipart upload | 12 MB (`MAX_UPLOAD_BYTES`) | 413   |
-| One photo        | 5 MB                         | 413   |
+| One photo        | 5 MB                       | 413   |
 
 The limit also applies to chunked bodies that send no `Content-Length`.
 
@@ -218,9 +220,9 @@ def detect_content_type(data: bytes) -> str | None:
 
 **Security headers.** Every response carries:
 
-| Header                        | Value           | Purpose                           |
-| ----------------------------- | --------------- | --------------------------------- |
-| `Strict-Transport-Security` | set             | Browsers use HTTPS only           |
+| Header                      | Value         | Purpose                           |
+| --------------------------- | ------------- | --------------------------------- |
+| `Strict-Transport-Security` | set           | Browsers use HTTPS only           |
 | `Cache-Control`             | `no-store`    | No cached copies of clinical data |
 | `X-Content-Type-Options`    | `nosniff`     | No content-type guessing          |
 | `X-Frame-Options`           | `DENY`        | The API cannot be framed          |
@@ -240,12 +242,12 @@ Planned: Cloudflare as reverse proxy and WAF in front of the API, CI with depend
 
 Every outside service is treated as untrusted. Only the backend talks to them, and the API keeps working when one is missing: its feature returns 503 or is skipped.
 
-| Service                  | What is sent                                        | Controls                                                                                                                                         |
-| ------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| SMTP email               | Invite links, login codes, reset links              | Sent over TLS (STARTTLS or port 465); if sending fails, the login code is deleted and 502 is returned                                            |
-| Upstash Redis            | Hashed login codes, lockout and rate-limit counters | Accessed over HTTPS with a token; no clinical data; login returns 503 if Redis is unavailable                                                    |
-| Firebase Cloud Messaging | Generic notification text and IDs                   | Google service account kept in config vars; dead device tokens are removed                                                                       |
-| Open-Meteo               | Grid cell coordinates                               | Called only when an admin triggers collection; no user or clinical data is sent                                                                  |
+| Service                  | What is sent                                        | Controls                                                                                                                                       |
+| ------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| SMTP email               | Invite links, login codes, reset links              | Sent over TLS (STARTTLS or port 465); if sending fails, the login code is deleted and 502 is returned                                          |
+| Upstash Redis            | Hashed login codes, lockout and rate-limit counters | Accessed over HTTPS with a token; no clinical data; login returns 503 if Redis is unavailable                                                  |
+| Firebase Cloud Messaging | Generic notification text and IDs                   | Google service account kept in config vars; dead device tokens are removed                                                                     |
+| Open-Meteo               | Grid cell coordinates                               | Called only when an admin triggers collection; no user or clinical data is sent                                                                |
 | Google Gemini            | Case evidence for predictions and chatbot questions | API key in a header, HTTPS only, 120-second timeout, 5 MB response cap, per-user rate limit of 10 requests per minute (429 with `Retry-After`) |
 
 **AI output is untrusted.** Every prediction is checked before it is saved: its evidence references must exist, its text must cite the data it uses, and its sources must be papers File Search actually returned. Wording about doses, certain diagnoses, treatment, invasive procedures, handling gorillas, short distances or blaming people is removed. Probabilities are capped because there is no laboratory result. Predictions are advisory and are never a diagnosis; a veterinarian decides. Details are in the [AI section](./ai).
@@ -254,31 +256,31 @@ Planned: an AI gateway that pseudonymises gorilla and staff identifiers and stri
 
 ## Incident Handling
 
-**Detect.** Unexpected errors are logged with an `error_id` that matches the one the client receives. Lockouts, IP blocks and the code cap stop repeated login attempts. The audit log records who changed what, and a broken hash chain shows that the log itself was tampered with.
+**Detect.** Unexpected errors are logged with an `error_id` that matches the one the client receives. Lockouts, IP blocks and the code cap stop repeated login attempts. The audit log records who changed or deleted what, and when.
 
 **Contain.**
 
-| Situation                      | Action                                                                                                                            |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Situation                      | Action                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | A staff account is compromised | Admin deactivates it (`PATCH /users/{id}/status`); every request is refused at once and device tokens are deleted               |
 | A password may be known        | Admin sends a new password link (`POST /users/{id}/send-password-link`); the old link and password stop working once it is used |
-| A secret or key leaked         | Revoke it in its console, set a new value in Heroku config vars, redeploy                                                         |
-| `SECRET_KEY` leaked          | Replace it; every existing token and link becomes invalid and everyone signs in again                                             |
-| Data is lost or corrupted      | Restore from the Supabase backup                                                                                                  |
+| A secret or key leaked         | Revoke it in its console, set a new value in Heroku config vars, redeploy                                                       |
+| `SECRET_KEY` leaked            | Replace it; every existing token and link becomes invalid and everyone signs in again                                           |
+| Data is lost or corrupted      | Restore from the Supabase backup                                                                                                |
 
 **Investigate.** Use the `error_id` to find the log entry (`heroku logs`) and the audit log to rebuild the timeline of changes.
 
-**Recover and review.** Fix the cause in a pull request with a test that reproduces it, record the incident and its fix in the gap register, and check the audit chain is intact afterwards.
+**Recover and review.** Fix the cause in a pull request with a test that reproduces it, and record the incident and its fix in the gap register.
 
-Planned: a SIEM collecting security events, alerts when audit chain verification fails, and audit entries for lockout, IP block, code cap and test-account login events.
+Planned: a SIEM collecting security events, a hash chain on the audit log with alerts when it is broken, and audit entries for lockout, IP block, code cap and test-account login events.
 
 ## Environment variables
 
-| Variable                                                 | Required                       | Purpose                               |
-| -------------------------------------------------------- | ------------------------------ | ------------------------------------- |
-| `SECRET_KEY`                                           | Yes, 32+ characters            | Signs tokens and hashes login codes   |
-| `ALLOWED_ORIGINS`                                      | Yes for the web app            | Comma-separated web app URLs for CORS |
-| `ADMIN_INVITE_KEY`                                     | Only to create the first admin | Enables `POST /auth/invite-admin`   |
-| `OTP_BYPASS_EMAILS`                                    | No, keep empty                 | Test tracker accounts only            |
+| Variable                                             | Required                       | Purpose                               |
+| ---------------------------------------------------- | ------------------------------ | ------------------------------------- |
+| `SECRET_KEY`                                         | Yes, 32+ characters            | Signs tokens and hashes login codes   |
+| `ALLOWED_ORIGINS`                                    | Yes for the web app            | Comma-separated web app URLs for CORS |
+| `ADMIN_INVITE_KEY`                                   | Only to create the first admin | Enables `POST /auth/invite-admin`     |
+| `OTP_BYPASS_EMAILS`                                  | No, keep empty                 | Test tracker accounts only            |
 | `MAX_BODY_BYTES`, `MAX_UPLOAD_BYTES`                 | No                             | Override the 1 MB and 12 MB limits    |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Yes for login                  | Login codes, lockouts, rate limits    |
