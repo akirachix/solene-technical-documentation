@@ -1,3 +1,7 @@
+<script setup>
+import { withBase } from 'vitepress'
+</script>
+
 # System Architecture
 ## Purpose of the Architecture 
 
@@ -11,8 +15,8 @@ Is a high-level visual blueprint that maps out the structural design of a softwa
 
 * **Primary Goal**: To illustrate exactly how data moves through the ecosystem and how components interact to satisfy business logic.
 
-<a href="public/solène SAD.png" target="_blank">
-  <img src="public/solène SAD.png" alt="Click to expand" width="1000" />
+<a :href="withBase('/system-architecture.png')" target="_blank">
+  <img :src="withBase('/system-architecture.png')" alt="Click to expand" width="1000" />
 </a>
 
 ## Secure SAD
@@ -30,8 +34,8 @@ Takes the standard SAD template and overlays a comprehensive layer of cybersecur
 * **Primary Goal**: To illustrate how data is protected and where the absolute security boundaries exist within the network architecture.
 
 
-<a href="public/CANOPY platform security architecture.png" target="_blank">
-  <img src="public/CANOPY platform security architecture.png" alt="Click to expand" width="1000" />
+<a :href="withBase('/security-architecture.png')" target="_blank">
+  <img :src="withBase('/security-architecture.png')" alt="Click to expand" width="1000" />
 </a>
 
 
@@ -297,7 +301,7 @@ A normal API request follows these steps:
 2. The frontend validates obvious input constraints such as required fields and text length.
 3. The browser sends a same-origin request to the Next.js API proxy.
 4. The proxy reads the HTTP-only session cookie.
-5. The proxy forwards the request to FastAPI with Authorization: Bearer <token>.
+5. The proxy forwards the request to FastAPI with `Authorization: Bearer <token>`.
 6. FastAPI extracts and validates the token.
 7. The router validates the request body, path variables, and query parameters using Pydantic schemas.
 8. A role dependency checks whether the current user may perform the operation.
