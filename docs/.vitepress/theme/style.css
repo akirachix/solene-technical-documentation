@@ -22,6 +22,31 @@
   --vp-code-color: #202124;
   --vp-code-bg: #e8dcc9;
   --vp-code-block-bg: #fbf8f1;
+  --canopy-card-bg: #fbf8f1;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --vp-c-bg: #171b1b;
+  --vp-c-bg-soft: #202727;
+  --vp-c-bg-alt: #293332;
+
+  --vp-c-text-1: #edf1ed;
+  --vp-c-text-2: #b0beb8;
+
+  --vp-c-brand-1: #ff784f;
+  --vp-c-brand-2: #ff9875;
+  --vp-c-brand-3: #ffb39a;
+
+  --vp-c-border: #3c4945;
+  --vp-c-divider: #3c4945;
+  --vp-c-gutter: #171b1b;
+
+  --vp-code-color: #edf1ed;
+  --vp-code-bg: #293332;
+  --vp-code-block-bg: #202727;
+  --canopy-card-bg: #202727;
 }
 
 .VPSidebar {
@@ -378,7 +403,7 @@
 }
 
 .canopy-card {
-  background: #fbf8f1;
+  background: var(--canopy-card-bg);
   border: 1px solid var(--vp-c-border);
   border-radius: 24px;
   padding: 2rem 1.5rem;
@@ -437,7 +462,7 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.75rem;
-  background: #fbf8f1;
+  background: var(--canopy-card-bg);
   border: 1px solid var(--vp-c-border);
   border-radius: 16px;
   font-size: 0.875rem;

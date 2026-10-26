@@ -6,7 +6,7 @@ export default defineConfig({
   description: "Technical documentation for Canopy",
   cleanUrls: true,
   lastUpdated: true,
-  appearance: false,
+  appearance: true,
   head: [
     [
       "link",
@@ -18,7 +18,10 @@ export default defineConfig({
   ],
   themeConfig: {
     siteTitle: false,
-    logo: "/canopy-icon.png",
+    logo: {
+      light: "/canopy-icon.png",
+      dark: "/darkmode-logo.png",
+    },
     nav: [
       { text: "Overview", link: "/overview" },
       { text: "Architecture", link: "/architecture" },

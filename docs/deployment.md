@@ -207,7 +207,7 @@ curl -i https://<backend-url>/health
 | Unexpected errors  | Logged with an `error_id`. The client receives the same `error_id`, so a user can quote it and support can find the log entry |
 | Audit trail        | Audit log of updates and deletes; entries are not hash-chained (see [Security](/security))                                    |
 | Scheduled job runs | Heroku Scheduler dashboard and `heroku logs`                                                                                  |
-| Web portal logs    | Not documented here; confirm the hosting provider and log-access procedure with the web deployment owner                       |
+| Web portal logs    | Not documented here; confirm the hosting provider and log-access procedure with the web deployment owner                      |
 
 There is no automated monitoring or alerting yet. Uptime checks, error tracking and a SIEM are planned (see [Security](/security)).
 
