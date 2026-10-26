@@ -6,19 +6,19 @@ The site is built with [VitePress](https://vitepress.dev).
 
 ## Contents
 
-| Page | What it covers |
-| ---- | -------------- |
-| Overview | What Canopy is, who it is for, and its scope |
-| Architecture | How the components fit together and how data flows |
-| Backend / API | The FastAPI service, data model, endpoints and business rules |
-| Mobile App | The Flutter field app, including offline sync |
-| Web App | The Next.js portal for vets and administrators |
-| Security | Authentication, roles and data protection |
-| AI Module | Risk predictions and the Canopy assistant |
-| Deployment | Hosting, environments and releases |
-| Design & Guidelines | Colours, components, accessibility and writing rules |
-| Developer Guide | Setting up and running Canopy locally |
-| Documentation Guide | How these docs are organised and written |
+| Page                | What it covers                                                |
+| ------------------- | ------------------------------------------------------------- |
+| Overview            | What Canopy is, who it is for, and its scope                  |
+| Architecture        | How the components fit together and how data flows            |
+| Backend / API       | The FastAPI service, data model, endpoints and business rules |
+| Mobile App          | The Flutter field app, including offline sync                 |
+| Web App             | The Next.js portal for vets and administrators                |
+| Security            | Authentication, roles and data protection                     |
+| AI Module           | Risk predictions and the Canopy assistant                     |
+| Deployment          | Hosting, environments and releases                            |
+| Design & Guidelines | Colours, components, accessibility and writing rules          |
+| Developer Guide     | Setting up and running Canopy locally                         |
+| Documentation Guide | How these docs are organised and written                      |
 
 ## Getting started
 
@@ -40,11 +40,11 @@ Open http://localhost:5173. The page reloads each time you save a file.
 
 ### Commands
 
-| Command | What it does |
-| ------- | ------------ |
-| `npm run docs:dev` | Starts the local preview |
-| `npm run docs:build` | Builds the static site into `docs/.vitepress/dist` |
-| `npm run docs:preview` | Serves the built site for a final check |
+| Command                | What it does                                       |
+| ---------------------- | -------------------------------------------------- |
+| `npm run docs:dev`     | Starts the local preview                           |
+| `npm run docs:build`   | Builds the static site into `docs/.vitepress/dist` |
+| `npm run docs:preview` | Serves the built site for a final check            |
 
 ## Project structure
 
@@ -96,12 +96,12 @@ Each Markdown file in `docs/` becomes a page: `docs/security.md` is served at `/
 
 Set `status` in each page's header so the team can see progress:
 
-| Status | Meaning |
-| ------ | ------- |
-| `planned` | Title only, not started |
-| `draft` | Being written |
-| `review` | Ready for a teammate to check |
-| `complete` | Reviewed and up to date |
+| Status     | Meaning                       |
+| ---------- | ----------------------------- |
+| `planned`  | Title only, not started       |
+| `draft`    | Being written                 |
+| `review`   | Ready for a teammate to check |
+| `complete` | Reviewed and up to date       |
 
 ### Writing rules
 
@@ -123,8 +123,8 @@ Set `status` in each page's header so the team can see progress:
 
 ## Related repositories
 
-| Repository | Description |
-| ---------- | ----------- |
-| `solene-backend` | FastAPI service, database and AI module |
-| `solene-frontend` | Next.js web portal |
-| Mobile app | Flutter field app for trackers |
+| Repository        | Description                             |
+| ----------------- | --------------------------------------- |
+| `solene-backend`  | FastAPI service, database and AI module |
+| `solene-frontend` | Next.js web portal                      |
+| Mobile app        | Flutter field app for trackers          |
